@@ -31,7 +31,13 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.local
+.env.*.local
+
+# testing and temporary checks
+coverage/
+.tmp-export-check/
 
 # typescript
 *.tsbuildinfo

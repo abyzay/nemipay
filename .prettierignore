@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+web-build
+.expo
+coverage
+ios
+android
+.tmp-export-check
+package-lock.json
