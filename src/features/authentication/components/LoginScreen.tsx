@@ -41,7 +41,7 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
           <View>
             <AuthHeader onBackPress={onBackPress} />
 
-            <View style={[styles.headingGroup, { marginTop: tokens.spacing.lg }]}>
+            <View style={[styles.headingGroup, { marginTop: tokens.spacing.sm }]}>
               <Text
                 style={[
                   styles.title,
@@ -68,12 +68,15 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
             </View>
           </View>
 
-          <View style={[styles.illustrationGroup, { paddingVertical: tokens.spacing.md }]}>
+          <View style={[styles.illustrationGroup, { paddingVertical: tokens.spacing.sm }]}>
             <LoginIllustration testID="login-illustration" />
           </View>
 
           <View
-            style={[styles.formGroup, { gap: tokens.spacing.md, paddingBottom: tokens.spacing.lg }]}
+            style={[
+              styles.formGroup,
+              { gap: tokens.spacing.sm + 4, paddingBottom: tokens.spacing.md },
+            ]}
           >
             <Controller
               control={control}
@@ -144,7 +147,6 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
               label="Iniciar sesión"
               onPress={handleSubmit(onSubmit)}
               testID="login-submit-button"
-              style={{ marginTop: tokens.spacing.xs }}
             />
           </View>
         </View>
@@ -176,6 +178,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   illustrationGroup: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
   },
   forgotButton: {
     alignSelf: 'center',
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 12,
   },
   forgotText: {

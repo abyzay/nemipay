@@ -7,7 +7,7 @@ export function WelcomeHero() {
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: tokens.spacing.xxs }]}>
+    <View style={[styles.container, { paddingTop: tokens.spacing.md }]}>
       <Text
         style={[
           styles.title,
