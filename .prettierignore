@@ -7,4 +7,5 @@ coverage
 ios
 android
 .tmp-export-check
+expo-env.d.ts
 package-lock.json

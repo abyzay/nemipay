@@ -53,7 +53,8 @@
         {
           "color": "#087F5B"
         }
-      ]
+      ],
+      "@react-native-vector-icons/ionicons"
     ]
   }
 }

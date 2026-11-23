@@ -16,6 +16,7 @@ module.exports = defineConfig([
       'ios/*',
       'android/*',
       '.tmp-export-check/*',
+      'expo-env.d.ts',
     ],
   },
 ]);
