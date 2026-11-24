@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { AppIcon, NemiPayLogo } from '@/components/ui';
+import { Pressable, StyleSheet } from 'react-native';
+import { AppHeader, AppIcon, NemiPayLogo } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 
 export interface WelcomeHeaderProps {
@@ -11,14 +11,9 @@ export function WelcomeHeader({ onNotificationsPress }: WelcomeHeaderProps) {
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: tokens.spacing.xs }]}>
-      <View style={styles.sideSlot} />
-
-      <View style={styles.logoSlot}>
-        <NemiPayLogo size="md" testID="welcome-logo" />
-      </View>
-
-      <View style={[styles.sideSlot, styles.rightAligned]}>
+    <AppHeader
+      centerSlot={<NemiPayLogo size="md" testID="welcome-logo" />}
+      rightSlot={
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Notificaciones"
@@ -27,41 +22,22 @@ export function WelcomeHeader({ onNotificationsPress }: WelcomeHeaderProps) {
           style={({ pressed }) => [
             styles.iconButton,
             {
-              borderRadius: tokens.radii.full,
-              backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
+              borderRadius: tokens.radius.radiusFull,
+              backgroundColor: pressed ? tokens.colors.lavenderSoft : 'transparent',
             },
           ]}
         >
-          <AppIcon name="notifications-outline" size={24} color={tokens.colors.textPrimary} />
+          <AppIcon name="bell" size={22} color={tokens.colors.textPrimary} />
         </Pressable>
-      </View>
-    </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 52,
-  },
-  sideSlot: {
-    width: 48,
-    height: 48,
-    justifyContent: 'center',
-  },
-  rightAligned: {
-    alignItems: 'flex-end',
-  },
-  logoSlot: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   iconButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

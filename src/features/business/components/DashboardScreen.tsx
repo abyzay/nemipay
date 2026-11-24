@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, AppIcon, SurfaceCard } from '@/components/ui';
+import { AppBottomSheet, AppButton, AppDivider, AppIcon } from '@/components/ui';
 import { RecentMovementsSection } from '@/features/movements/components';
 import { getRecentMockMovements } from '@/features/movements/services';
 import { QuickReceiveActions, ReceivePaymentHeroCard } from '@/features/payments/components';
@@ -35,13 +35,13 @@ export function DashboardScreen({
   const ownerName = authenticatedUser?.displayName ?? dashboardData.merchant.ownerName;
 
   return (
-    <ScreenContainer edges={['top']}>
+    <ScreenContainer edges={['top']} scrollable>
       <View
         style={[
           styles.content,
           {
-            gap: tokens.spacing.xs + 2,
-            paddingBottom: tokens.spacing.xs,
+            gap: tokens.spacing.space4,
+            paddingBottom: tokens.spacing.space6,
           },
         ]}
       >
@@ -57,18 +57,20 @@ export function DashboardScreen({
           initials={dashboardData.merchant.avatarInitials}
         />
 
-        <ReceivePaymentHeroCard onPress={onReceiveQrPress} testID="dashboard-receive-qr-hero" />
-
-        <QuickReceiveActions
-          onQuickChargePress={onQuickChargePress}
-          onBusinessQrPress={onBusinessQrPress}
-        />
-
         <BalanceSummaryCard
           todayReceivedCents={dashboardData.summary.todayReceivedCents}
           todayCount={dashboardData.summary.todayCount}
           currency={dashboardData.summary.currency}
         />
+
+        <View style={{ gap: tokens.spacing.space3 }}>
+          <ReceivePaymentHeroCard onPress={onReceiveQrPress} testID="dashboard-receive-qr-hero" />
+
+          <QuickReceiveActions
+            onQuickChargePress={onQuickChargePress}
+            onBusinessQrPress={onBusinessQrPress}
+          />
+        </View>
 
         <RecentMovementsSection
           movements={recentMovements}
@@ -76,62 +78,35 @@ export function DashboardScreen({
         />
       </View>
 
-      <Modal
+      <AppBottomSheet
         visible={notificationsVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setNotificationsVisible(false)}
+        onClose={() => setNotificationsVisible(false)}
+        title="Avisos de cobro"
+        closeAccessibilityLabel="Cerrar notificaciones"
+        testID="dashboard-notifications-modal"
       >
-        <View
-          style={[
-            styles.modalBackdrop,
-            {
-              backgroundColor: tokens.colors.primaryDark,
-            },
-          ]}
-        >
-          <Pressable
-            accessibilityLabel="Cerrar notificaciones"
-            style={StyleSheet.absoluteFill}
-            onPress={() => setNotificationsVisible(false)}
-          />
-          <SurfaceCard style={styles.modalCard} testID="dashboard-notifications-modal">
-            <View style={styles.modalHeader}>
-              <Text
+        <View style={{ marginBottom: tokens.spacing.space5 }}>
+          {dashboardData.notifications.map((notification, index) => (
+            <View key={notification.id}>
+              <View
                 style={[
-                  styles.modalTitle,
-                  {
-                    fontFamily: tokens.typography.families.bold,
-                    color: tokens.colors.textPrimary,
-                  },
+                  styles.notificationRow,
+                  { paddingVertical: tokens.spacing.space3, gap: tokens.spacing.space3 },
                 ]}
               >
-                Avisos de cobro
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar"
-                onPress={() => setNotificationsVisible(false)}
-                hitSlop={8}
-              >
-                <AppIcon name="close" size={22} color={tokens.colors.textSecondary} />
-              </Pressable>
-            </View>
-
-            <View style={{ gap: tokens.spacing.xs, marginVertical: tokens.spacing.sm }}>
-              {dashboardData.notifications.map((notification) => (
                 <View
-                  key={notification.id}
                   style={[
-                    styles.notificationItem,
+                    styles.notificationIcon,
                     {
-                      backgroundColor: tokens.colors.background,
-                      borderColor: tokens.colors.border,
-                      borderRadius: tokens.radii.md,
-                      padding: tokens.spacing.sm,
+                      backgroundColor: tokens.colors.lavenderSoft,
+                      borderRadius: tokens.radius.radiusFull,
                     },
                   ]}
                 >
+                  <AppIcon name="bell" size={18} color={tokens.colors.primary} />
+                </View>
+
+                <View style={styles.notificationContent}>
                   <View style={styles.notificationHeader}>
                     <Text
                       style={[
@@ -149,7 +124,7 @@ export function DashboardScreen({
                         styles.notificationTime,
                         {
                           fontFamily: tokens.typography.families.regular,
-                          color: tokens.colors.textSecondary,
+                          color: tokens.colors.textMuted,
                         },
                       ]}
                     >
@@ -168,57 +143,52 @@ export function DashboardScreen({
                     {notification.body}
                   </Text>
                 </View>
-              ))}
+              </View>
+              {index < dashboardData.notifications.length - 1 ? <AppDivider /> : null}
             </View>
-
-            <AppButton
-              variant="primary"
-              label="Entendido"
-              onPress={() => setNotificationsVisible(false)}
-              testID="dashboard-notifications-close-button"
-            />
-          </SurfaceCard>
+          ))}
         </View>
-      </Modal>
+
+        <AppButton
+          variant="primary"
+          label="Entendido"
+          onPress={() => setNotificationsVisible(false)}
+          testID="dashboard-notifications-close-button"
+        />
+      </AppBottomSheet>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    flex: 1,
-    justifyContent: 'space-between',
+    flexGrow: 1,
   },
-  modalBackdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    opacity: 0.98,
-  },
-  modalCard: {
-    width: '100%',
-  },
-  modalHeader: {
+  notificationRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  notificationIcon: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    marginTop: 2,
   },
-  modalTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-  },
-  notificationItem: {
-    borderWidth: 1,
+  notificationContent: {
+    flex: 1,
     gap: 4,
   },
   notificationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   notificationTitle: {
     fontSize: 14,
-    lineHeight: 19,
+    lineHeight: 20,
+    flex: 1,
   },
   notificationTime: {
     fontSize: 12,
@@ -226,6 +196,6 @@ const styles = StyleSheet.create({
   },
   notificationBody: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
   },
 });

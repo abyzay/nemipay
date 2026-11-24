@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SectionHeader } from '@/components/ui';
+import { AppCard, SectionHeader } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import type { ReceivedMovement } from '../types';
 import { MovementRow } from './MovementRow';
@@ -16,7 +16,7 @@ export function RecentMovementsSection({ movements, onSeeAllPress }: RecentMovem
 
   return (
     <View
-      style={[styles.container, { gap: tokens.spacing.xs + 2 }]}
+      style={[styles.container, { gap: tokens.spacing.space3 }]}
       testID="recent-movements-section"
     >
       <SectionHeader
@@ -26,25 +26,27 @@ export function RecentMovementsSection({ movements, onSeeAllPress }: RecentMovem
         actionTestID="dashboard-see-all-movements-button"
       />
 
-      <View style={[styles.list, { gap: tokens.spacing.xs }]}>
+      <AppCard
+        variant="standard"
+        padding="none"
+        style={{ paddingHorizontal: tokens.spacing.space4, paddingVertical: tokens.spacing.space1 }}
+      >
         {visibleMovements.map((movement, index) => (
           <MovementRow
             key={movement.id}
             movement={movement}
             compact
+            showDivider={index < visibleMovements.length - 1}
             testID={`dashboard-movement-item-${index}`}
           />
         ))}
-      </View>
+      </AppCard>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-  },
-  list: {
     width: '100%',
   },
 });

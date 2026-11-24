@@ -31,7 +31,12 @@ export function ReportsScreen({ onBackPress }: ReportsScreenProps) {
 
   return (
     <ScreenContainer edges={['top']} scrollable>
-      <View style={[styles.content, { gap: tokens.spacing.md, paddingBottom: tokens.spacing.md }]}>
+      <View
+        style={[
+          styles.content,
+          { gap: tokens.spacing.space4, paddingBottom: tokens.spacing.space6 },
+        ]}
+      >
         <ReportsHeader
           onBackPress={onBackPress}
           onCalendarPress={() => setPeriodModalVisible(true)}

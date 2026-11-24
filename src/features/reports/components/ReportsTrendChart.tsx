@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LineChart, type lineDataItem } from 'react-native-gifted-charts';
-import { SurfaceCard } from '@/components/ui';
+import { AppCard } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { formatCurrencyFromCents } from '@/utils/currency';
 import type { ReportChartPoint } from '../types';
@@ -58,7 +58,7 @@ export function ReportsTrendChart({
   };
 
   return (
-    <SurfaceCard testID="reports-trend-chart-card" style={styles.card}>
+    <AppCard testID="reports-trend-chart-card" style={styles.card}>
       <View style={styles.chartWrapper}>
         <LineChart
           areaChart
@@ -73,17 +73,17 @@ export function ReportsTrendChart({
           noOfSections={3}
           thickness={2.5}
           color={tokens.colors.primary}
-          startFillColor={tokens.colors.success}
-          endFillColor={tokens.colors.surface}
-          startOpacity={0.28}
+          startFillColor={tokens.colors.primaryLight}
+          endFillColor={tokens.colors.background}
+          startOpacity={0.2}
           endOpacity={0.02}
           dataPointsColor={tokens.colors.primary}
           dataPointsRadius={5}
           rulesType="solid"
-          rulesColor={tokens.colors.border}
+          rulesColor={tokens.colors.divider}
           rulesThickness={1}
           showVerticalLines
-          verticalLinesColor={tokens.colors.border}
+          verticalLinesColor={tokens.colors.divider}
           verticalLinesThickness={1}
           yAxisColor={tokens.colors.border}
           xAxisColor={tokens.colors.border}
@@ -121,19 +121,20 @@ export function ReportsTrendChart({
                   style={[
                     styles.tooltip,
                     {
-                      backgroundColor: tokens.colors.primaryDark,
-                      borderRadius: tokens.radii.md,
-                      paddingHorizontal: tokens.spacing.xs,
-                      paddingVertical: tokens.spacing.xxs + 2,
+                      backgroundColor: tokens.colors.textPrimary,
+                      borderRadius: tokens.radius.radiusMD,
+                      paddingHorizontal: tokens.spacing.space2,
+                      paddingVertical: tokens.spacing.space1 + 2,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.tooltipAmount,
+                      tokens.typography.tabularNums,
                       {
                         fontFamily: tokens.typography.families.bold,
-                        color: tokens.colors.onPrimary,
+                        color: tokens.colors.textOnPrimary,
                       },
                     ]}
                   >
@@ -144,7 +145,7 @@ export function ReportsTrendChart({
                       styles.tooltipMeta,
                       {
                         fontFamily: tokens.typography.families.regular,
-                        color: tokens.colors.secondary,
+                        color: tokens.colors.lavender,
                       },
                     ]}
                   >
@@ -156,7 +157,7 @@ export function ReportsTrendChart({
           }}
         />
       </View>
-    </SurfaceCard>
+    </AppCard>
   );
 }
 

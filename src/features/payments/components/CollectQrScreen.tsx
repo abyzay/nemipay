@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, AppIcon, SurfaceCard } from '@/components/ui';
+import { AppButton, AppCard, AppHeader, AppIcon, AppInput } from '@/components/ui';
 import { getMockDashboardData } from '@/features/business/services';
 import { useAppTheme } from '@/hooks';
 import { formatCurrencyFromCents } from '@/utils/currency';
@@ -84,47 +84,20 @@ export function CollectQrScreen({
 
   return (
     <ScreenContainer scrollable>
-      <View style={[styles.header, { paddingTop: tokens.spacing.xs }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Regresar al inicio"
-          onPress={onBackPress}
-          testID="collect-back-button"
-          style={({ pressed }) => [
-            styles.backButton,
-            {
-              borderRadius: tokens.radii.full,
-              backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
-            },
-          ]}
-        >
-          <AppIcon name="chevron-back" size={24} color={tokens.colors.textPrimary} />
-        </Pressable>
-
-        <Text
-          style={[
-            styles.headerTitle,
-            {
-              fontFamily: tokens.typography.families.bold,
-              color: tokens.colors.textPrimary,
-            },
-          ]}
-        >
-          Recibir pago CoDi
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
+      <AppHeader
+        title="Recibir pago CoDi"
+        onBackPress={onBackPress}
+        backTestID="collect-back-button"
+      />
 
       <View
         style={[
           styles.modeSwitch,
           {
-            backgroundColor: tokens.colors.surface,
-            borderColor: tokens.colors.border,
-            borderRadius: tokens.radii.full,
-            padding: tokens.spacing.xxs,
-            marginTop: tokens.spacing.sm,
+            backgroundColor: tokens.colors.surfaceSecondary,
+            borderRadius: tokens.radius.radiusFull,
+            padding: tokens.spacing.space1,
+            marginTop: tokens.spacing.space3,
           },
         ]}
       >
@@ -143,10 +116,11 @@ export function CollectQrScreen({
               testID={`collect-mode-${option.id}`}
               style={[
                 styles.modeTab,
+                selected ? tokens.shadows.card : undefined,
                 {
-                  borderRadius: tokens.radii.full,
+                  borderRadius: tokens.radius.radiusFull,
                   backgroundColor: selected ? tokens.colors.primary : 'transparent',
-                  paddingVertical: tokens.spacing.xs + 2,
+                  paddingVertical: tokens.spacing.space2 + 2,
                 },
               ]}
             >
@@ -155,7 +129,7 @@ export function CollectQrScreen({
                   styles.modeTabText,
                   {
                     fontFamily: tokens.typography.families.semiBold,
-                    color: selected ? tokens.colors.onPrimary : tokens.colors.textSecondary,
+                    color: selected ? tokens.colors.textOnPrimary : tokens.colors.textSecondary,
                   },
                 ]}
               >
@@ -167,97 +141,36 @@ export function CollectQrScreen({
       </View>
 
       {mode === 'dynamic' ? (
-        <SurfaceCard style={{ marginTop: tokens.spacing.md, gap: tokens.spacing.sm }}>
-          <Text
-            style={[
-              styles.fieldLabel,
-              {
-                fontFamily: tokens.typography.families.semiBold,
-                color: tokens.colors.textSecondary,
-              },
-            ]}
-          >
-            Monto a cobrar (MXN)
-          </Text>
-          <View
-            style={[
-              styles.amountRow,
-              {
-                borderColor: tokens.colors.border,
-                backgroundColor: tokens.colors.background,
-                borderRadius: tokens.radii.md,
-                paddingHorizontal: tokens.spacing.sm,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.currencySymbol,
-                {
-                  fontFamily: tokens.typography.families.bold,
-                  color: tokens.colors.primary,
-                },
-              ]}
-            >
-              $
-            </Text>
-            <TextInput
-              value={amountInput}
-              onChangeText={setAmountInput}
-              keyboardType="decimal-pad"
-              placeholder="0.00"
-              placeholderTextColor={tokens.colors.textSecondary}
-              testID="collect-amount-input"
-              style={[
-                styles.amountInput,
-                {
-                  fontFamily: tokens.typography.families.bold,
-                  color: tokens.colors.textPrimary,
-                },
-              ]}
-            />
-          </View>
+        <AppCard style={{ marginTop: tokens.spacing.space4, gap: tokens.spacing.space4 }}>
+          <AppInput
+            label="Monto a cobrar (MXN)"
+            prefix="$"
+            value={amountInput}
+            onChangeText={setAmountInput}
+            keyboardType="decimal-pad"
+            placeholder="0.00"
+            testID="collect-amount-input"
+          />
 
-          <Text
-            style={[
-              styles.fieldLabel,
-              {
-                fontFamily: tokens.typography.families.semiBold,
-                color: tokens.colors.textSecondary,
-              },
-            ]}
-          >
-            Concepto del cobro
-          </Text>
-          <TextInput
+          <AppInput
+            label="Concepto del cobro"
+            leftIcon="receipt"
             value={conceptInput}
             onChangeText={setConceptInput}
             placeholder="Ej. Orden mesa 2"
-            placeholderTextColor={tokens.colors.textSecondary}
             testID="collect-concept-input"
-            style={[
-              styles.conceptInput,
-              {
-                borderColor: tokens.colors.border,
-                backgroundColor: tokens.colors.background,
-                borderRadius: tokens.radii.md,
-                paddingHorizontal: tokens.spacing.sm,
-                fontFamily: tokens.typography.families.medium,
-                color: tokens.colors.textPrimary,
-              },
-            ]}
           />
-        </SurfaceCard>
+        </AppCard>
       ) : null}
 
-      <SurfaceCard
-        style={[styles.qrCard, { marginTop: tokens.spacing.md, gap: tokens.spacing.sm }]}
+      <AppCard
+        style={[styles.qrCard, { marginTop: tokens.spacing.space4, gap: tokens.spacing.space3 }]}
       >
         <Text
           style={[
             styles.merchantName,
             {
-              fontFamily: tokens.typography.families.bold,
+              fontFamily: tokens.typography.families.semiBold,
               color: tokens.colors.textPrimary,
             },
           ]}
@@ -267,9 +180,10 @@ export function CollectQrScreen({
         <Text
           style={[
             styles.aliasText,
+            tokens.typography.tabularNums,
             {
               fontFamily: tokens.typography.families.medium,
-              color: tokens.colors.textSecondary,
+              color: tokens.colors.primary,
             },
           ]}
         >
@@ -284,10 +198,10 @@ export function CollectQrScreen({
           style={[
             styles.qrWrapper,
             {
-              backgroundColor: tokens.colors.surface,
+              backgroundColor: tokens.colors.background,
               borderColor: tokens.colors.border,
-              borderRadius: tokens.radii.lg,
-              padding: tokens.spacing.md,
+              borderRadius: tokens.radius.radiusCard,
+              padding: tokens.spacing.space4,
             },
           ]}
         >
@@ -295,7 +209,7 @@ export function CollectQrScreen({
             value={qrPayload}
             size={188}
             color={tokens.colors.textPrimary}
-            backgroundColor={tokens.colors.surface}
+            backgroundColor={tokens.colors.background}
           />
         </View>
 
@@ -303,29 +217,30 @@ export function CollectQrScreen({
           style={[
             styles.noticeBanner,
             {
-              backgroundColor: tokens.colors.secondary,
-              borderRadius: tokens.radii.md,
-              padding: tokens.spacing.sm,
-              gap: tokens.spacing.xs,
+              backgroundColor: tokens.colors.lavenderSoft,
+              borderColor: tokens.colors.lavenderBorder,
+              borderRadius: tokens.radius.radiusMD,
+              padding: tokens.spacing.space3,
+              gap: tokens.spacing.space2,
             },
           ]}
         >
-          <AppIcon name="shield-checkmark-outline" size={18} color={tokens.colors.primaryDark} />
+          <AppIcon name="shield-check" size={18} color={tokens.colors.primary} />
           <Text
             style={[
               styles.noticeText,
               {
                 fontFamily: tokens.typography.families.medium,
-                color: tokens.colors.onSecondary,
+                color: tokens.colors.gray[700],
               },
             ]}
           >
             Tu cliente escanea este QR desde su app bancaria. NemiPay solo recibe pagos.
           </Text>
         </View>
-      </SurfaceCard>
+      </AppCard>
 
-      <View style={{ paddingVertical: tokens.spacing.md, gap: tokens.spacing.sm }}>
+      <View style={{ paddingVertical: tokens.spacing.space4, gap: tokens.spacing.space3 }}>
         <AppButton
           variant="outlined"
           label="Volver al panel"
@@ -358,29 +273,8 @@ export function CollectQrScreen({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 48,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-  },
-  headerSpacer: {
-    width: 44,
-  },
   modeSwitch: {
     flexDirection: 'row',
-    borderWidth: 1,
   },
   modeTab: {
     flex: 1,
@@ -391,40 +285,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  fieldLabel: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    minHeight: 50,
-    gap: 6,
-  },
-  currencySymbol: {
-    fontSize: 22,
-    lineHeight: 28,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 22,
-    lineHeight: 28,
-    paddingVertical: 8,
-  },
-  conceptInput: {
-    borderWidth: 1,
-    minHeight: 46,
-    fontSize: 15,
-    lineHeight: 20,
-    paddingVertical: 10,
-  },
   qrCard: {
     alignItems: 'center',
   },
   merchantName: {
     fontSize: 18,
-    lineHeight: 24,
+    lineHeight: 26,
     textAlign: 'center',
   },
   aliasText: {
@@ -441,6 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
+    borderWidth: 1,
   },
   noticeText: {
     flex: 1,

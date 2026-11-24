@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, SurfaceCard } from '@/components/ui';
+import { AppButton, AppEmptyState } from '@/components/ui';
 import { getMockDashboardData } from '@/features/business/services';
 import { PaymentReceivedModal } from '@/features/payments/components';
 import { useAppTheme } from '@/hooks';
@@ -173,7 +173,7 @@ export function PosScreen({ onClosePress, onQrCheckoutPress }: PosScreenProps) {
 
   return (
     <ScreenContainer edges={['top']}>
-      <View style={[styles.container, { gap: tokens.spacing.xs + 2 }]}>
+      <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
         <PosHeader
           onAddProductPress={() => {
             setEditingProduct(null);
@@ -203,8 +203,11 @@ export function PosScreen({ onClosePress, onQrCheckoutPress }: PosScreenProps) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           style={styles.catalogList}
-          columnWrapperStyle={{ gap: tokens.spacing.xs + 2 }}
-          contentContainerStyle={{ gap: tokens.spacing.xs + 2, paddingBottom: tokens.spacing.sm }}
+          columnWrapperStyle={{ gap: tokens.spacing.space3 }}
+          contentContainerStyle={{
+            gap: tokens.spacing.space3,
+            paddingBottom: tokens.spacing.space3,
+          }}
           renderItem={({ item }) => (
             <PosProductCard
               product={item}
@@ -218,59 +221,40 @@ export function PosScreen({ onClosePress, onQrCheckoutPress }: PosScreenProps) {
             />
           )}
           ListEmptyComponent={
-            <SurfaceCard style={styles.emptyCard} testID="pos-empty-state">
-              <Text
-                style={[
-                  styles.emptyTitle,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.textPrimary,
-                  },
-                ]}
-              >
-                No encontramos ese producto
-              </Text>
-              <Text
-                style={[
-                  styles.emptySubtitle,
-                  {
-                    fontFamily: tokens.typography.families.regular,
-                    color: tokens.colors.textSecondary,
-                  },
-                ]}
-              >
-                Puedes limpiar la búsqueda o crearlo al instante.
-              </Text>
-              <View
-                style={[
-                  styles.emptyActions,
-                  { gap: tokens.spacing.xs, marginTop: tokens.spacing.sm },
-                ]}
-              >
-                <AppButton
-                  variant="primary"
-                  label={
-                    searchQuery.trim() ? `Agregar "${searchQuery.trim()}"` : 'Agregar producto'
-                  }
-                  onPress={() => {
-                    setEditingProduct(null);
-                    setFormVisible(true);
-                  }}
-                  testID="pos-empty-add-button"
-                />
-                {searchQuery.trim() || selectedCategory !== 'Todos' ? (
+            <AppEmptyState
+              icon="search"
+              title="No encontramos ese producto"
+              description="Puedes limpiar la búsqueda o crearlo al instante."
+              testID="pos-empty-state"
+              actions={
+                <>
                   <AppButton
-                    variant="outlined"
-                    label="Ver todos los productos"
+                    variant="primary"
+                    size="md"
+                    label={
+                      searchQuery.trim() ? `Agregar "${searchQuery.trim()}"` : 'Agregar producto'
+                    }
                     onPress={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('Todos');
+                      setEditingProduct(null);
+                      setFormVisible(true);
                     }}
-                    testID="pos-empty-reset-button"
+                    testID="pos-empty-add-button"
                   />
-                ) : null}
-              </View>
-            </SurfaceCard>
+                  {searchQuery.trim() || selectedCategory !== 'Todos' ? (
+                    <AppButton
+                      variant="outlined"
+                      size="md"
+                      label="Ver todos los productos"
+                      onPress={() => {
+                        setSearchQuery('');
+                        setSelectedCategory('Todos');
+                      }}
+                      testID="pos-empty-reset-button"
+                    />
+                  ) : null}
+                </>
+              }
+            />
           }
         />
 
@@ -313,22 +297,5 @@ const styles = StyleSheet.create({
   },
   catalogList: {
     flex: 1,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  emptyTitle: {
-    fontSize: 15,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  emptyActions: {
-    width: '100%',
   },
 });

@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, AppCheckbox, AppIcon, AppTextField } from '@/components/ui';
+import { AppButton, AppCheckbox, AppIcon, AppInput } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { registerSchema, type RegisterFormValues } from '../schemas';
 import { AuthHeader } from './AuthHeader';
@@ -49,7 +49,7 @@ export function RegisterScreen({
           <View>
             <AuthHeader onBackPress={onBackPress} />
 
-            <View style={[styles.headingGroup, { marginTop: tokens.spacing.lg }]}>
+            <View style={[styles.headingGroup, { marginTop: tokens.spacing.space5 }]}>
               <Text
                 style={[
                   styles.title,
@@ -65,9 +65,9 @@ export function RegisterScreen({
                 style={[
                   styles.subtitle,
                   {
-                    fontFamily: tokens.typography.families.medium,
-                    color: tokens.colors.textPrimary,
-                    marginTop: tokens.spacing.xs,
+                    fontFamily: tokens.typography.families.regular,
+                    color: tokens.colors.textSecondary,
+                    marginTop: tokens.spacing.space2,
                   },
                 ]}
               >
@@ -80,8 +80,8 @@ export function RegisterScreen({
             style={[
               styles.formGroup,
               {
-                paddingVertical: tokens.spacing.lg,
-                gap: tokens.spacing.md,
+                paddingVertical: tokens.spacing.space6,
+                gap: tokens.spacing.space4,
               },
             ]}
           >
@@ -89,9 +89,10 @@ export function RegisterScreen({
               control={control}
               name="fullName"
               render={({ field: { onChange, onBlur, value } }) => (
-                <AppTextField
-                  leftIcon="person-outline"
-                  placeholder="Nombre completo"
+                <AppInput
+                  label="Nombre completo"
+                  leftIcon="user-round"
+                  placeholder="Ej. Sofía López"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -110,9 +111,10 @@ export function RegisterScreen({
               control={control}
               name="phone"
               render={({ field: { onChange, onBlur, value } }) => (
-                <AppTextField
+                <AppInput
+                  label="Número de celular"
                   leftIcon="call-outline"
-                  placeholder="Número de celular"
+                  placeholder="10 dígitos"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -131,9 +133,10 @@ export function RegisterScreen({
               control={control}
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
-                <AppTextField
+                <AppInput
+                  label="Correo electrónico"
                   leftIcon="mail-outline"
-                  placeholder="Correo electrónico"
+                  placeholder="correo@negocio.mx"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -153,9 +156,10 @@ export function RegisterScreen({
               control={control}
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
-                <AppTextField
-                  leftIcon="lock-closed-outline"
-                  placeholder="Crea una contraseña"
+                <AppInput
+                  label="Contraseña"
+                  leftIcon="lock"
+                  placeholder="Mínimo 8 caracteres"
                   isPassword
                   value={value}
                   onChangeText={onChange}
@@ -171,7 +175,7 @@ export function RegisterScreen({
               )}
             />
 
-            <View style={{ marginTop: tokens.spacing.xs }}>
+            <View style={{ marginTop: tokens.spacing.space1 }}>
               <Controller
                 control={control}
                 name="acceptTerms"
@@ -222,7 +226,7 @@ export function RegisterScreen({
             </View>
           </View>
 
-          <View style={[styles.footerGroup, { paddingBottom: tokens.spacing.md }]}>
+          <View style={[styles.footerGroup, { paddingBottom: tokens.spacing.space4 }]}>
             <AppButton
               variant="primary"
               label="Crear cuenta"
@@ -233,11 +237,11 @@ export function RegisterScreen({
             <View
               style={[
                 styles.securityBadge,
-                { marginTop: tokens.spacing.md, gap: tokens.spacing.xs },
+                { marginTop: tokens.spacing.space4, gap: tokens.spacing.space2 },
               ]}
             >
               <AppIcon
-                name="lock-closed-outline"
+                name="lock"
                 size={16}
                 color={tokens.colors.primary}
                 testID="register-security-lock-icon"
@@ -280,7 +284,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
     textAlign: 'center',
   },
   formGroup: {

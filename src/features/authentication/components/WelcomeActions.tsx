@@ -23,8 +23,8 @@ export function WelcomeActions({
       style={[
         styles.container,
         {
-          paddingBottom: tokens.spacing.xs,
-          gap: tokens.spacing.xs + 2,
+          paddingBottom: tokens.spacing.space2,
+          gap: tokens.spacing.space3,
         },
       ]}
     >
@@ -48,7 +48,7 @@ export function WelcomeActions({
           {
             fontFamily: tokens.typography.families.regular,
             color: tokens.colors.textSecondary,
-            marginTop: tokens.spacing.xxs,
+            marginTop: tokens.spacing.space1,
           },
         ]}
       >
@@ -57,8 +57,8 @@ export function WelcomeActions({
           accessibilityRole="link"
           onPress={onTermsPress}
           style={{
-            fontFamily: tokens.typography.families.medium,
-            color: tokens.colors.textPrimary,
+            fontFamily: tokens.typography.families.semiBold,
+            color: tokens.colors.primary,
           }}
         >
           Términos
@@ -68,8 +68,8 @@ export function WelcomeActions({
           accessibilityRole="link"
           onPress={onPrivacyPress}
           style={{
-            fontFamily: tokens.typography.families.medium,
-            color: tokens.colors.textPrimary,
+            fontFamily: tokens.typography.families.semiBold,
+            color: tokens.colors.primary,
           }}
         >
           Aviso de privacidad.

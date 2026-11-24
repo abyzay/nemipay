@@ -1,9 +1,9 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppIcon } from '@/components/ui';
+import { AmountDisplay } from '@/components/financial';
+import { AppBadge, AppCard, AppIcon } from '@/components/ui';
 import { APP_ASSETS } from '@/constants/assets';
 import { useAppTheme } from '@/hooks';
-import { formatCurrencyFromCents } from '@/utils/currency';
 
 export interface PosTotalBannerProps {
   businessName: string;
@@ -22,128 +22,111 @@ export function PosTotalBanner({
   const hasItems = unitsCount > 0;
 
   return (
-    <View style={[styles.container, { gap: tokens.spacing.sm }]} testID="pos-total-banner">
-      <View
-        style={[
-          styles.illustrationBox,
-          {
-            backgroundColor: tokens.colors.surface,
-            borderColor: tokens.colors.border,
-            borderRadius: tokens.radii.lg,
-          },
-        ]}
-      >
-        <Image
-          source={APP_ASSETS.posStorefront}
-          resizeMode="contain"
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={`Ilustración de ${businessName}`}
-          testID="pos-storefront-illustration"
-          style={styles.illustration}
-        />
-      </View>
-
-      <View style={[styles.rightColumn, { gap: tokens.spacing.xxs + 2 }]}>
-        <View style={styles.businessRow}>
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.businessName,
-              {
-                fontFamily: tokens.typography.families.bold,
-                color: tokens.colors.textPrimary,
-              },
-            ]}
-          >
-            {businessName}
-          </Text>
-
-          {hasItems ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Vaciar pedido"
-              onPress={onClearCartPress}
-              hitSlop={8}
-              testID="pos-clear-cart-button"
-              style={({ pressed }) => [
-                styles.clearButton,
-                {
-                  backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
-                  borderRadius: tokens.radii.full,
-                  gap: 3,
-                },
-              ]}
-            >
-              <AppIcon name="trash-outline" size={14} color={tokens.colors.error} />
-              <Text
-                style={[
-                  styles.clearText,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.error,
-                  },
-                ]}
-              >
-                Limpiar
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-
+    <AppCard
+      variant="standard"
+      padding="sm"
+      testID="pos-total-banner"
+      style={{ borderRadius: tokens.radius.radiusCard }}
+    >
+      <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
         <View
           style={[
-            styles.totalBox,
+            styles.illustrationBox,
             {
               backgroundColor: tokens.colors.surface,
-              borderColor: hasItems ? tokens.colors.primary : tokens.colors.border,
-              borderRadius: tokens.radii.lg,
-              paddingHorizontal: tokens.spacing.sm,
-              paddingVertical: tokens.spacing.xs,
+              borderColor: tokens.colors.border,
+              borderRadius: tokens.radius.radiusMD,
             },
           ]}
         >
-          <View
-            style={[
-              styles.unitsBadge,
-              {
-                backgroundColor: hasItems ? tokens.colors.secondary : tokens.colors.background,
-                borderRadius: tokens.radii.full,
-                paddingHorizontal: tokens.spacing.xs,
-              },
-            ]}
-          >
+          <Image
+            source={APP_ASSETS.posStorefront}
+            resizeMode="contain"
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`Ilustración de ${businessName}`}
+            testID="pos-storefront-illustration"
+            style={styles.illustration}
+          />
+        </View>
+
+        <View style={[styles.rightColumn, { gap: tokens.spacing.space2 }]}>
+          <View style={styles.businessRow}>
             <Text
-              testID="pos-units-count"
+              numberOfLines={1}
               style={[
-                styles.unitsText,
+                styles.businessName,
                 {
                   fontFamily: tokens.typography.families.semiBold,
-                  color: hasItems ? tokens.colors.primaryDark : tokens.colors.textSecondary,
+                  color: tokens.colors.textPrimary,
                 },
               ]}
             >
-              {unitsCount === 1 ? '1 art.' : `${unitsCount} art.`}
+              {businessName}
             </Text>
+
+            {hasItems ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Vaciar pedido"
+                onPress={onClearCartPress}
+                hitSlop={8}
+                testID="pos-clear-cart-button"
+                style={({ pressed }) => [
+                  styles.clearButton,
+                  {
+                    backgroundColor: pressed ? tokens.colors.errorLight : 'transparent',
+                    borderRadius: tokens.radius.radiusFull,
+                    gap: 4,
+                  },
+                ]}
+              >
+                <AppIcon name="trash-2" size={14} color={tokens.colors.error} />
+                <Text
+                  style={[
+                    styles.clearText,
+                    {
+                      fontFamily: tokens.typography.families.semiBold,
+                      color: tokens.colors.error,
+                    },
+                  ]}
+                >
+                  Limpiar
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
 
-          <Text
-            testID="pos-total-amount"
-            numberOfLines={1}
-            adjustsFontSizeToFit
+          <View
             style={[
-              styles.totalAmount,
+              styles.totalBox,
               {
-                fontFamily: tokens.typography.families.bold,
-                color: hasItems ? tokens.colors.primary : tokens.colors.textSecondary,
+                backgroundColor: hasItems ? tokens.colors.lavenderSoft : tokens.colors.surface,
+                borderColor: hasItems ? tokens.colors.lavenderBorder : tokens.colors.border,
+                borderRadius: tokens.radius.radiusInput,
+                paddingHorizontal: tokens.spacing.space3,
+                paddingVertical: tokens.spacing.space2,
               },
             ]}
           >
-            {formatCurrencyFromCents(totalCents)}
-          </Text>
+            <AppBadge
+              label={unitsCount === 1 ? '1 art.' : `${unitsCount} art.`}
+              variant={hasItems ? 'lavender' : 'neutral'}
+              testID="pos-units-count"
+            />
+
+            <AmountDisplay
+              amountCents={totalCents}
+              size="md"
+              tone={hasItems ? 'primary' : 'default'}
+              adjustsFontSizeToFit
+              testID="pos-total-amount"
+              style={styles.totalAmount}
+            />
+          </View>
         </View>
       </View>
-    </View>
+    </AppCard>
   );
 }
 
@@ -153,16 +136,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   illustrationBox: {
-    width: 78,
-    height: 78,
+    width: 70,
+    height: 70,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   illustration: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
   },
   rightColumn: {
     flex: 1,
@@ -181,8 +164,8 @@ const styles = StyleSheet.create({
   clearButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   clearText: {
     fontSize: 12,
@@ -192,22 +175,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1.5,
-    minHeight: 50,
+    borderWidth: 1,
+    minHeight: 46,
     gap: 8,
-  },
-  unitsBadge: {
-    paddingVertical: 3,
-  },
-  unitsText: {
-    fontSize: 12,
-    lineHeight: 16,
   },
   totalAmount: {
     flex: 1,
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: -0.5,
     textAlign: 'right',
   },
 });

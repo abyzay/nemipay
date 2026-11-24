@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { AppCard, AppDivider } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { formatCurrencyFromCents } from '@/utils/currency';
 
@@ -43,49 +44,53 @@ export function ReportsSummaryList({
         style={[
           styles.heading,
           {
-            fontFamily: tokens.typography.families.bold,
+            fontFamily: tokens.typography.families.semiBold,
             color: tokens.colors.textPrimary,
-            marginBottom: tokens.spacing.xs,
+            marginBottom: tokens.spacing.space3,
           },
         ]}
       >
         Resumen
       </Text>
 
-      <View style={[styles.divider, { backgroundColor: tokens.colors.border }]} />
-
-      {rows.map((row, index) => (
-        <View key={row.id}>
-          <View style={[styles.row, { paddingVertical: tokens.spacing.sm }]}>
-            <Text
-              style={[
-                styles.rowLabel,
-                {
-                  fontFamily: tokens.typography.families.regular,
-                  color: tokens.colors.textPrimary,
-                },
-              ]}
-            >
-              {row.label}
-            </Text>
-            <Text
-              testID={row.testID}
-              style={[
-                styles.rowValue,
-                {
-                  fontFamily: tokens.typography.families.bold,
-                  color: row.id === 'qr-share' ? tokens.colors.primary : tokens.colors.textPrimary,
-                },
-              ]}
-            >
-              {row.value}
-            </Text>
+      <AppCard
+        variant="standard"
+        padding="none"
+        style={{ paddingHorizontal: tokens.spacing.space4 }}
+      >
+        {rows.map((row, index) => (
+          <View key={row.id}>
+            <View style={[styles.row, { paddingVertical: tokens.spacing.space4 }]}>
+              <Text
+                style={[
+                  styles.rowLabel,
+                  {
+                    fontFamily: tokens.typography.families.regular,
+                    color: tokens.colors.textSecondary,
+                  },
+                ]}
+              >
+                {row.label}
+              </Text>
+              <Text
+                testID={row.testID}
+                style={[
+                  styles.rowValue,
+                  tokens.typography.tabularNums,
+                  {
+                    fontFamily: tokens.typography.families.semiBold,
+                    color:
+                      row.id === 'qr-share' ? tokens.colors.primary : tokens.colors.textPrimary,
+                  },
+                ]}
+              >
+                {row.value}
+              </Text>
+            </View>
+            {index < rows.length - 1 ? <AppDivider /> : null}
           </View>
-          {index < rows.length - 1 ? (
-            <View style={[styles.divider, { backgroundColor: tokens.colors.border }]} />
-          ) : null}
-        </View>
-      ))}
+        ))}
+      </AppCard>
     </View>
   );
 }
@@ -96,10 +101,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    lineHeight: 24,
-  },
-  divider: {
-    height: 1,
+    lineHeight: 26,
   },
   row: {
     flexDirection: 'row',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppIcon } from '@/components/ui';
+import { AmountDisplay } from '@/components/financial';
+import { AppCard, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { formatCurrencyFromCents } from '@/utils/currency';
 import type { PosProduct } from '../types';
@@ -24,22 +25,14 @@ export function PosProductCard({
   const isInCart = quantity > 0;
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Agregar ${product.name}, ${formatCurrencyFromCents(product.priceCents)}`}
+    <AppCard
+      variant={isInCart ? 'selected' : 'standard'}
+      padding="sm"
+      elevated={!isInCart}
       onPress={() => onIncrement(product)}
+      accessibilityLabel={`Agregar ${product.name}, ${formatCurrencyFromCents(product.priceCents)}`}
       testID={`pos-product-card-${product.id}`}
-      style={({ pressed }) => [
-        styles.card,
-        tokens.elevations.xs,
-        {
-          backgroundColor: pressed ? tokens.colors.secondary : tokens.colors.surface,
-          borderColor: isInCart ? tokens.colors.primary : tokens.colors.border,
-          borderWidth: isInCart ? 1.5 : 1,
-          borderRadius: tokens.radii.lg,
-          padding: tokens.spacing.sm,
-        },
-      ]}
+      style={styles.card}
     >
       <View style={styles.topRow}>
         {product.imageUri ? (
@@ -48,8 +41,8 @@ export function PosProductCard({
             style={[
               styles.productImage,
               {
-                borderRadius: tokens.radii.md,
-                backgroundColor: tokens.colors.background,
+                borderRadius: tokens.radius.radiusMD,
+                backgroundColor: tokens.colors.surface,
               },
             ]}
             testID={`pos-product-image-${product.id}`}
@@ -59,12 +52,12 @@ export function PosProductCard({
             style={[
               styles.iconBox,
               {
-                backgroundColor: tokens.colors.secondary,
-                borderRadius: tokens.radii.md,
+                backgroundColor: isInCart ? tokens.colors.background : tokens.colors.lavenderSoft,
+                borderRadius: tokens.radius.radiusMD,
               },
             ]}
           >
-            <AppIcon name={product.iconName} size={22} color={tokens.colors.primaryDark} />
+            <AppIcon name={product.iconName} size={20} color={tokens.colors.primary} />
           </View>
         )}
 
@@ -76,16 +69,17 @@ export function PosProductCard({
                 styles.qtyBadge,
                 {
                   backgroundColor: tokens.colors.primary,
-                  borderRadius: tokens.radii.full,
+                  borderRadius: tokens.radius.radiusFull,
                 },
               ]}
             >
               <Text
                 style={[
                   styles.qtyBadgeText,
+                  tokens.typography.tabularNums,
                   {
                     fontFamily: tokens.typography.families.bold,
-                    color: tokens.colors.onPrimary,
+                    color: tokens.colors.textOnPrimary,
                   },
                 ]}
               >
@@ -103,8 +97,12 @@ export function PosProductCard({
             style={({ pressed }) => [
               styles.editButton,
               {
-                borderRadius: tokens.radii.full,
-                backgroundColor: pressed ? tokens.colors.secondary : tokens.colors.background,
+                borderRadius: tokens.radius.radiusFull,
+                backgroundColor: pressed
+                  ? tokens.colors.lavender
+                  : isInCart
+                    ? tokens.colors.background
+                    : tokens.colors.surface,
               },
             ]}
           >
@@ -120,28 +118,18 @@ export function PosProductCard({
           {
             fontFamily: tokens.typography.families.semiBold,
             color: tokens.colors.textPrimary,
-            marginTop: tokens.spacing.xs,
+            marginTop: tokens.spacing.space2,
           },
         ]}
       >
         {product.name}
       </Text>
 
-      <View style={[styles.bottomRow, { marginTop: tokens.spacing.xxs }]}>
-        <Text
-          style={[
-            styles.price,
-            {
-              fontFamily: tokens.typography.families.bold,
-              color: tokens.colors.primary,
-            },
-          ]}
-        >
-          {formatCurrencyFromCents(product.priceCents, { omitZeroCents: true })}
-        </Text>
+      <View style={[styles.bottomRow, { marginTop: tokens.spacing.space1 }]}>
+        <AmountDisplay amountCents={product.priceCents} size="sm" tone="primary" omitZeroCents />
 
         {isInCart ? (
-          <View style={[styles.stepper, { gap: tokens.spacing.xxs }]}>
+          <View style={[styles.stepper, { gap: tokens.spacing.space1 }]}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Quitar uno de ${product.name}`}
@@ -151,12 +139,13 @@ export function PosProductCard({
               style={[
                 styles.stepBtn,
                 {
-                  backgroundColor: tokens.colors.secondary,
-                  borderRadius: tokens.radii.full,
+                  backgroundColor: tokens.colors.background,
+                  borderColor: tokens.colors.lavenderBorder,
+                  borderRadius: tokens.radius.radiusFull,
                 },
               ]}
             >
-              <AppIcon name="remove" size={14} color={tokens.colors.primaryDark} />
+              <AppIcon name="minus" size={14} color={tokens.colors.primary} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -168,11 +157,12 @@ export function PosProductCard({
                 styles.stepBtn,
                 {
                   backgroundColor: tokens.colors.primary,
-                  borderRadius: tokens.radii.full,
+                  borderColor: tokens.colors.primary,
+                  borderRadius: tokens.radius.radiusFull,
                 },
               ]}
             >
-              <AppIcon name="add" size={14} color={tokens.colors.onPrimary} />
+              <AppIcon name="plus" size={14} color={tokens.colors.textOnPrimary} />
             </Pressable>
           </View>
         ) : (
@@ -181,7 +171,7 @@ export function PosProductCard({
               styles.tapHint,
               {
                 fontFamily: tokens.typography.families.medium,
-                color: tokens.colors.textSecondary,
+                color: tokens.colors.textMuted,
               },
             ]}
           >
@@ -189,14 +179,14 @@ export function PosProductCard({
           </Text>
         )}
       </View>
-    </Pressable>
+    </AppCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 112,
+    minHeight: 116,
     justifyContent: 'space-between',
   },
   topRow: {
@@ -238,16 +228,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 14,
-    lineHeight: 19,
+    lineHeight: 20,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  price: {
-    fontSize: 15,
-    lineHeight: 20,
   },
   stepper: {
     flexDirection: 'row',
@@ -256,11 +242,12 @@ const styles = StyleSheet.create({
   stepBtn: {
     width: 24,
     height: 24,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tapHint: {
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

@@ -24,7 +24,7 @@ export function SectionHeader({
         style={[
           styles.title,
           {
-            fontFamily: tokens.typography.families.bold,
+            fontFamily: tokens.typography.families.semiBold,
             color: tokens.colors.textPrimary,
           },
         ]}
@@ -42,7 +42,7 @@ export function SectionHeader({
           style={({ pressed }) => [
             styles.actionButton,
             {
-              gap: tokens.spacing.xxs,
+              gap: tokens.spacing.space1,
               opacity: pressed ? 0.7 : 1,
             },
           ]}
@@ -58,7 +58,7 @@ export function SectionHeader({
           >
             {actionLabel}
           </Text>
-          <AppIcon name="chevron-forward" size={14} color={tokens.colors.primary} />
+          <AppIcon name="chevron-right" size={16} color={tokens.colors.primary} />
         </Pressable>
       ) : null}
     </View>
@@ -72,8 +72,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 26,
+    letterSpacing: -0.2,
   },
   actionButton: {
     flexDirection: 'row',
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   actionText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

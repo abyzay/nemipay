@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppIcon, SurfaceCard } from '@/components/ui';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppBottomSheet, AppCard, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import type { ReportPeriodId, ReportPeriodSummary } from '../types';
 
@@ -34,12 +34,11 @@ export function ReportsPeriodSelector({
           style={({ pressed }) => [
             styles.pillButton,
             {
-              backgroundColor: pressed ? tokens.colors.secondary : tokens.colors.surface,
-              borderColor: tokens.colors.border,
-              borderRadius: tokens.radii.full,
-              paddingHorizontal: tokens.spacing.md,
-              paddingVertical: tokens.spacing.xs,
-              gap: tokens.spacing.xs,
+              backgroundColor: pressed ? tokens.colors.lavender : tokens.colors.surfaceSecondary,
+              borderRadius: tokens.radius.radiusFull,
+              paddingHorizontal: tokens.spacing.space4,
+              paddingVertical: tokens.spacing.space2,
+              gap: tokens.spacing.space2,
             },
           ]}
         >
@@ -55,88 +54,53 @@ export function ReportsPeriodSelector({
           >
             {selectedPeriod.label}
           </Text>
-          <AppIcon name="chevron-down" size={16} color={tokens.colors.textPrimary} />
+          <AppIcon name="chevron-down" size={16} color={tokens.colors.primary} />
         </Pressable>
       </View>
 
-      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={onCloseModal}>
-        <View style={[styles.backdrop, { backgroundColor: tokens.colors.primaryDark }]}>
-          <Pressable
-            accessibilityLabel="Cerrar selector de periodo"
-            style={StyleSheet.absoluteFill}
-            onPress={onCloseModal}
-          />
-          <SurfaceCard style={styles.modalCard} testID="reports-period-modal">
-            <View style={styles.modalHeader}>
-              <Text
-                style={[
-                  styles.modalTitle,
-                  {
-                    fontFamily: tokens.typography.families.bold,
-                    color: tokens.colors.textPrimary,
-                  },
-                ]}
+      <AppBottomSheet
+        visible={modalVisible}
+        onClose={onCloseModal}
+        title="Periodo del reporte"
+        closeAccessibilityLabel="Cerrar selector de periodo"
+        testID="reports-period-modal"
+      >
+        <View style={[styles.optionsList, { gap: tokens.spacing.space2 + 2 }]}>
+          {periods.map((period) => {
+            const isSelected = period.id === selectedPeriod.id;
+            return (
+              <AppCard
+                key={period.id}
+                variant={isSelected ? 'selected' : 'secondary'}
+                padding="md"
+                elevated={false}
+                onPress={() => {
+                  onSelectPeriod(period.id);
+                  onCloseModal();
+                }}
+                testID={`reports-period-option-${period.id}`}
               >
-                Periodo del reporte
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar"
-                onPress={onCloseModal}
-                hitSlop={8}
-              >
-                <AppIcon name="close" size={20} color={tokens.colors.textSecondary} />
-              </Pressable>
-            </View>
-
-            <View
-              style={[styles.optionsList, { gap: tokens.spacing.xs, marginTop: tokens.spacing.sm }]}
-            >
-              {periods.map((period) => {
-                const isSelected = period.id === selectedPeriod.id;
-                return (
-                  <Pressable
-                    key={period.id}
-                    accessibilityRole="button"
-                    onPress={() => {
-                      onSelectPeriod(period.id);
-                      onCloseModal();
-                    }}
-                    testID={`reports-period-option-${period.id}`}
+                <View style={styles.optionRow}>
+                  <Text
                     style={[
-                      styles.optionRow,
+                      styles.optionText,
                       {
-                        backgroundColor: isSelected
-                          ? tokens.colors.secondary
-                          : tokens.colors.background,
-                        borderColor: isSelected ? tokens.colors.primary : tokens.colors.border,
-                        borderRadius: tokens.radii.md,
-                        paddingHorizontal: tokens.spacing.md,
-                        paddingVertical: tokens.spacing.sm,
+                        fontFamily: tokens.typography.families.semiBold,
+                        color: isSelected ? tokens.colors.primary : tokens.colors.textPrimary,
                       },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        {
-                          fontFamily: tokens.typography.families.semiBold,
-                          color: isSelected ? tokens.colors.primaryDark : tokens.colors.textPrimary,
-                        },
-                      ]}
-                    >
-                      {period.label}
-                    </Text>
-                    {isSelected ? (
-                      <AppIcon name="checkmark-circle" size={20} color={tokens.colors.primary} />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </SurfaceCard>
+                    {period.label}
+                  </Text>
+                  {isSelected ? (
+                    <AppIcon name="circle-check" size={20} color={tokens.colors.primary} />
+                  ) : null}
+                </View>
+              </AppCard>
+            );
+          })}
         </View>
-      </Modal>
+      </AppBottomSheet>
     </>
   );
 }
@@ -148,30 +112,11 @@ const styles = StyleSheet.create({
   pillButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     minHeight: 38,
   },
   pillText: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
-  },
-  backdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    opacity: 0.98,
-  },
-  modalCard: {
-    width: '100%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalTitle: {
-    fontSize: 17,
-    lineHeight: 22,
   },
   optionsList: {
     width: '100%',
@@ -180,7 +125,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
   },
   optionText: {
     fontSize: 15,

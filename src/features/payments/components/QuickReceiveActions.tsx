@@ -1,7 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { IoniconsIconName } from '@react-native-vector-icons/ionicons';
-import { AppIcon } from '@/components/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppCard, AppIcon, type AppIconName } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 
 export interface QuickReceiveActionsProps {
@@ -10,7 +9,7 @@ export interface QuickReceiveActionsProps {
 }
 
 interface ActionTileProps {
-  icon: IoniconsIconName;
+  icon: AppIconName;
   label: string;
   onPress: () => void;
   testID: string;
@@ -20,37 +19,41 @@ function QuickActionTile({ icon, label, onPress, testID }: ActionTileProps) {
   const { tokens } = useAppTheme();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
+    <AppCard
+      variant="secondary"
+      padding="md"
+      elevated={false}
       onPress={onPress}
+      accessibilityLabel={label}
       testID={testID}
-      style={({ pressed }) => [
-        styles.tile,
-        {
-          backgroundColor: pressed ? tokens.colors.border : tokens.colors.secondary,
-          borderRadius: tokens.radii.lg,
-          borderColor: tokens.colors.border,
-          paddingVertical: tokens.spacing.sm + 2,
-          paddingHorizontal: tokens.spacing.sm,
-          gap: tokens.spacing.xxs + 2,
-        },
-      ]}
+      style={styles.tileWrapper}
     >
-      <AppIcon name={icon} size={24} color={tokens.colors.primaryDark} />
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.tileLabel,
-          {
-            fontFamily: tokens.typography.families.semiBold,
-            color: tokens.colors.onSecondary,
-          },
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      <View style={[styles.tileContent, { gap: tokens.spacing.space2 }]}>
+        <View
+          style={[
+            styles.iconCircle,
+            {
+              backgroundColor: tokens.colors.lavender,
+              borderRadius: tokens.radius.radiusFull,
+            },
+          ]}
+        >
+          <AppIcon name={icon} size={20} color={tokens.colors.primary} />
+        </View>
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.tileLabel,
+            {
+              fontFamily: tokens.typography.families.semiBold,
+              color: tokens.colors.textPrimary,
+            },
+          ]}
+        >
+          {label}
+        </Text>
+      </View>
+    </AppCard>
   );
 }
 
@@ -64,19 +67,23 @@ export function QuickReceiveActions({
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.row, { gap: tokens.spacing.sm }]}>
-      <QuickActionTile
-        icon="cash-outline"
-        label="Cobro rápido"
-        onPress={onQuickChargePress}
-        testID="dashboard-quick-charge-button"
-      />
-      <QuickActionTile
-        icon="storefront-outline"
-        label="QR del negocio"
-        onPress={onBusinessQrPress}
-        testID="dashboard-business-qr-button"
-      />
+    <View style={[styles.row, { gap: tokens.spacing.space3 }]}>
+      <View style={styles.col}>
+        <QuickActionTile
+          icon="banknote"
+          label="Cobro rápido"
+          onPress={onQuickChargePress}
+          testID="dashboard-quick-charge-button"
+        />
+      </View>
+      <View style={styles.col}>
+        <QuickActionTile
+          icon="store"
+          label="QR del negocio"
+          onPress={onBusinessQrPress}
+          testID="dashboard-business-qr-button"
+        />
+      </View>
     </View>
   );
 }
@@ -86,12 +93,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
   },
-  tile: {
+  col: {
     flex: 1,
-    minHeight: 74,
+  },
+  tileWrapper: {
+    minHeight: 92,
+    justifyContent: 'center',
+  },
+  tileContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tileLabel: {
     fontSize: 14,

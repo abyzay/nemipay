@@ -12,7 +12,7 @@ export function DashboardHeader({ unreadCount = 0, onNotificationsPress }: Dashb
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: tokens.spacing.xxs }]}>
+    <View style={[styles.container, { paddingTop: tokens.spacing.space1 }]}>
       <NemiPayLogo size="md" testID="dashboard-logo" />
 
       <Pressable
@@ -25,12 +25,13 @@ export function DashboardHeader({ unreadCount = 0, onNotificationsPress }: Dashb
         style={({ pressed }) => [
           styles.bellButton,
           {
-            borderRadius: tokens.radii.full,
-            backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
+            borderRadius: tokens.radius.radiusFull,
+            backgroundColor: pressed ? tokens.colors.lavenderSoft : tokens.colors.surface,
+            borderColor: tokens.colors.border,
           },
         ]}
       >
-        <AppIcon name="notifications-outline" size={24} color={tokens.colors.textPrimary} />
+        <AppIcon name="bell" size={20} color={tokens.colors.textPrimary} />
         {unreadCount > 0 ? (
           <View
             testID="dashboard-notifications-badge"
@@ -39,7 +40,7 @@ export function DashboardHeader({ unreadCount = 0, onNotificationsPress }: Dashb
               {
                 backgroundColor: tokens.colors.primary,
                 borderColor: tokens.colors.background,
-                borderRadius: tokens.radii.full,
+                borderRadius: tokens.radius.radiusFull,
               },
             ]}
           />
@@ -54,11 +55,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: 48,
   },
   bellButton: {
     width: 44,
     height: 44,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, AppIcon, SurfaceCard, UserAvatar } from '@/components/ui';
+import { AppAvatar, AppBadge, AppButton, AppCard, AppDivider, AppIcon } from '@/components/ui';
 import { getMockDashboardData } from '@/features/business/services';
 import { useAppTheme } from '@/hooks';
 import { useUiStore } from '@/stores';
@@ -20,7 +20,7 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
 
   return (
     <ScreenContainer edges={['top']} scrollable>
-      <View style={[styles.header, { paddingTop: tokens.spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: tokens.spacing.space3 }]}>
         <Text
           style={[
             styles.title,
@@ -34,16 +34,22 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
         </Text>
       </View>
 
-      <SurfaceCard
-        style={[styles.profileCard, { marginTop: tokens.spacing.md, gap: tokens.spacing.sm }]}
+      <AppCard
+        variant="standard"
+        padding="lg"
+        style={[
+          styles.profileCard,
+          { marginTop: tokens.spacing.space4, gap: tokens.spacing.space2 },
+        ]}
       >
-        <UserAvatar initials={dashboardData.merchant.avatarInitials} size={64} />
+        <AppAvatar initials={dashboardData.merchant.avatarInitials} size={64} />
         <Text
           style={[
             styles.ownerName,
             {
               fontFamily: tokens.typography.families.bold,
               color: tokens.colors.textPrimary,
+              marginTop: tokens.spacing.space1,
             },
           ]}
         >
@@ -53,18 +59,35 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
           style={[
             styles.businessName,
             {
-              fontFamily: tokens.typography.families.medium,
+              fontFamily: tokens.typography.families.regular,
               color: tokens.colors.textSecondary,
             },
           ]}
         >
           {`${dashboardData.merchant.businessName} · @${username}`}
         </Text>
-      </SurfaceCard>
+        <View style={{ marginTop: tokens.spacing.space1 }}>
+          <AppBadge label="Comercio verificado CoDi" variant="lavender" icon="shield-check" />
+        </View>
+      </AppCard>
 
-      <SurfaceCard style={{ marginTop: tokens.spacing.md, gap: tokens.spacing.sm }}>
-        <View style={[styles.infoRow, { gap: tokens.spacing.sm }]}>
-          <AppIcon name="qr-code-outline" size={20} color={tokens.colors.primary} />
+      <AppCard
+        variant="standard"
+        padding="md"
+        style={{ marginTop: tokens.spacing.space4, gap: tokens.spacing.space3 }}
+      >
+        <View style={[styles.infoRow, { gap: tokens.spacing.space3 }]}>
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: tokens.colors.lavenderSoft,
+                borderRadius: tokens.radius.radiusMD,
+              },
+            ]}
+          >
+            <AppIcon name="qr-code" size={20} color={tokens.colors.primary} />
+          </View>
           <View style={styles.infoText}>
             <Text
               style={[
@@ -91,10 +114,20 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
           </View>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: tokens.colors.border }]} />
+        <AppDivider />
 
-        <View style={[styles.infoRow, { gap: tokens.spacing.sm }]}>
-          <AppIcon name="business-outline" size={20} color={tokens.colors.primary} />
+        <View style={[styles.infoRow, { gap: tokens.spacing.space3 }]}>
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: tokens.colors.lavenderSoft,
+                borderRadius: tokens.radius.radiusMD,
+              },
+            ]}
+          >
+            <AppIcon name="business-outline" size={20} color={tokens.colors.primary} />
+          </View>
           <View style={styles.infoText}>
             <Text
               style={[
@@ -120,9 +153,9 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
             </Text>
           </View>
         </View>
-      </SurfaceCard>
+      </AppCard>
 
-      <View style={{ marginTop: tokens.spacing.lg, paddingBottom: tokens.spacing.lg }}>
+      <View style={{ marginTop: tokens.spacing.space6, paddingBottom: tokens.spacing.space6 }}>
         <AppButton
           variant="outlined"
           label="Cerrar sesión"
@@ -139,15 +172,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 24,
+    lineHeight: 32,
+    letterSpacing: -0.4,
   },
   profileCard: {
     alignItems: 'center',
   },
   ownerName: {
     fontSize: 20,
-    lineHeight: 26,
+    lineHeight: 28,
   },
   businessName: {
     fontSize: 14,
@@ -156,6 +190,12 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoText: {
     flex: 1,
@@ -168,8 +208,5 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 15,
     lineHeight: 20,
-  },
-  divider: {
-    height: 1,
   },
 });

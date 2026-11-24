@@ -1,4 +1,4 @@
-import type { IoniconsIconName } from '@react-native-vector-icons/ionicons';
+import type { AppIconName } from '@/components/ui';
 import type { CurrencyCode } from '@/types/common';
 
 export type MovementChannel = 'codi_qr' | 'codi_push';
@@ -13,5 +13,5 @@ export interface ReceivedMovement {
   timeLabel: string;
   status: MovementStatus;
   channel: MovementChannel;
-  iconName: IoniconsIconName;
+  iconName: AppIconName;
 }

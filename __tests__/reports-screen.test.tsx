@@ -66,7 +66,9 @@ describe('ReportsScreen (Reportes)', () => {
 
     const chart = screen.getByTestId('mock-line-chart');
     expect(chart).toBeOnTheScreen();
-    expect(chart.props.accessibilityHint).toBe(`${lightColors.primary}|${lightColors.success}`);
+    expect(chart.props.accessibilityHint).toBe(
+      `${lightColors.primary}|${lightColors.primaryLight}`
+    );
     expect(screen.getByText('Lun:1250')).toBeOnTheScreen();
     expect(screen.getByText('Sáb:5950')).toBeOnTheScreen();
 

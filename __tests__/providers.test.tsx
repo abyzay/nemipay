@@ -29,6 +29,6 @@ describe('AppProviders de infraestructura', () => {
       </AppProviders>
     );
 
-    expect(screen.getByTestId('probe-text')).toHaveTextContent('NemiPay:#087F5B');
+    expect(screen.getByTestId('probe-text')).toHaveTextContent('NemiPay:#7200D9');
   });
 });

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
+import { AppChip, AppEmptyState } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { getMockMovements } from '../services';
 import type { MovementChannel } from '../types';
@@ -28,7 +29,7 @@ export function MovementsScreen() {
 
   return (
     <ScreenContainer edges={['top']}>
-      <View style={[styles.header, { paddingTop: tokens.spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: tokens.spacing.space3 }]}>
         <Text
           style={[
             styles.title,
@@ -54,51 +55,41 @@ export function MovementsScreen() {
       </View>
 
       <View
-        style={[styles.filterRow, { gap: tokens.spacing.xs, marginVertical: tokens.spacing.md }]}
+        style={[
+          styles.filterRow,
+          { gap: tokens.spacing.space2, marginVertical: tokens.spacing.space4 },
+        ]}
       >
-        {FILTERS.map((filter) => {
-          const isSelected = selectedFilter === filter.id;
-          return (
-            <Pressable
-              key={filter.id}
-              accessibilityRole="button"
-              onPress={() => setSelectedFilter(filter.id)}
-              testID={`movements-filter-${filter.id}`}
-              style={[
-                styles.filterChip,
-                {
-                  borderRadius: tokens.radii.full,
-                  borderColor: isSelected ? tokens.colors.primary : tokens.colors.border,
-                  backgroundColor: isSelected ? tokens.colors.primary : tokens.colors.surface,
-                  paddingHorizontal: tokens.spacing.sm + 2,
-                  paddingVertical: tokens.spacing.xs,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: isSelected ? tokens.colors.onPrimary : tokens.colors.textSecondary,
-                  },
-                ]}
-              >
-                {filter.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+        {FILTERS.map((filter) => (
+          <AppChip
+            key={filter.id}
+            label={filter.label}
+            selected={selectedFilter === filter.id}
+            onPress={() => setSelectedFilter(filter.id)}
+            testID={`movements-filter-${filter.id}`}
+          />
+        ))}
       </View>
 
       <FlatList
         data={filteredMovements}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ gap: tokens.spacing.xs + 2, paddingBottom: tokens.spacing.lg }}
-        renderItem={({ item }) => (
-          <MovementRow movement={item} testID={`movement-row-${item.id}`} />
+        contentContainerStyle={{ paddingBottom: tokens.spacing.space6 }}
+        renderItem={({ item, index }) => (
+          <MovementRow
+            movement={item}
+            showDivider={index < filteredMovements.length - 1}
+            testID={`movement-row-${item.id}`}
+          />
         )}
+        ListEmptyComponent={
+          <AppEmptyState
+            icon="receipt"
+            title="Sin movimientos en esta categoría"
+            description="Los cobros CoDi que recibas aparecerán aquí."
+          />
+        }
       />
     </ScreenContainer>
   );
@@ -109,8 +100,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 24,
+    lineHeight: 32,
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 14,
@@ -119,12 +111,5 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  filterChip: {
-    borderWidth: 1,
-  },
-  filterText: {
-    fontSize: 13,
-    lineHeight: 18,
   },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppIcon } from '@/components/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppCard, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 
 export interface ReceivePaymentHeroCardProps {
@@ -12,74 +12,75 @@ export function ReceivePaymentHeroCard({ onPress, testID }: ReceivePaymentHeroCa
   const { tokens } = useAppTheme();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Cobrar con QR. Genera tu código CoDi al instante"
+    <AppCard
+      variant="standard"
+      padding="md"
       onPress={onPress}
+      accessibilityLabel="Cobrar con QR. Genera tu código CoDi al instante"
       testID={testID}
-      style={({ pressed }) => [
-        styles.card,
-        tokens.elevations.sm,
-        {
-          backgroundColor: pressed ? tokens.colors.primaryDark : tokens.colors.primary,
-          borderRadius: tokens.radii.lg,
-          paddingHorizontal: tokens.spacing.md,
-          paddingVertical: tokens.spacing.sm + 2,
-          gap: tokens.spacing.sm + 4,
-        },
-      ]}
     >
-      <View
-        style={[
-          styles.iconBox,
-          {
-            backgroundColor: tokens.colors.primaryDark,
-            borderRadius: tokens.radii.md,
-          },
-        ]}
-      >
-        <AppIcon name="qr-code-outline" size={28} color={tokens.colors.onPrimary} />
-      </View>
-
-      <View style={styles.textGroup}>
-        <Text
+      <View style={[styles.row, { gap: tokens.spacing.space3 }]}>
+        <View
           style={[
-            styles.title,
+            styles.iconBox,
             {
-              fontFamily: tokens.typography.families.bold,
-              color: tokens.colors.onPrimary,
+              backgroundColor: tokens.colors.lavender,
+              borderRadius: tokens.radius.radiusMD,
             },
           ]}
         >
-          Cobrar con QR
-        </Text>
-        <Text
+          <AppIcon name="qr-code" size={24} color={tokens.colors.primary} />
+        </View>
+
+        <View style={styles.textGroup}>
+          <Text
+            style={[
+              styles.title,
+              {
+                fontFamily: tokens.typography.families.semiBold,
+                color: tokens.colors.textPrimary,
+              },
+            ]}
+          >
+            Cobrar con QR
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                fontFamily: tokens.typography.families.regular,
+                color: tokens.colors.textSecondary,
+              },
+            ]}
+          >
+            Genera tu código CoDi al instante
+          </Text>
+        </View>
+
+        <View
           style={[
-            styles.subtitle,
+            styles.chevronBox,
             {
-              fontFamily: tokens.typography.families.regular,
-              color: tokens.colors.secondary,
+              backgroundColor: tokens.colors.lavenderSoft,
+              borderRadius: tokens.radius.radiusFull,
             },
           ]}
         >
-          Genera tu código CoDi al instante
-        </Text>
+          <AppIcon name="chevron-right" size={18} color={tokens.colors.primary} />
+        </View>
       </View>
-
-      <AppIcon name="chevron-forward" size={22} color={tokens.colors.onPrimary} />
-    </Pressable>
+    </AppCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 74,
   },
   iconBox: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -88,11 +89,17 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
   },
   subtitle: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  chevronBox: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

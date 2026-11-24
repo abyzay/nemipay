@@ -1,10 +1,4 @@
-export const radii = {
-  none: 0,
-  sm: 6,
-  md: 10,
-  lg: 14,
-  xl: 20,
-  full: 9999,
-} as const;
+import { radii, radius, type RadiiTokens, type RadiusTokens } from './radius';
 
-export type RadiiTokens = typeof radii;
+export { radii, radius };
+export type { RadiiTokens, RadiusTokens };

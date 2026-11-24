@@ -29,11 +29,11 @@ export function AppCheckbox({
     ? tokens.colors.error
     : checked
       ? tokens.colors.primary
-      : tokens.colors.textSecondary;
+      : tokens.colors.gray[300];
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.row, { gap: tokens.spacing.sm }]}>
+      <View style={[styles.row, { gap: tokens.spacing.space3 }]}>
         <Pressable
           accessibilityRole="checkbox"
           accessibilityLabel={accessibilityLabel}
@@ -44,13 +44,15 @@ export function AppCheckbox({
           style={[
             styles.box,
             {
-              borderRadius: tokens.radii.sm,
+              borderRadius: tokens.radius.radiusSM,
               borderColor: boxBorderColor,
-              backgroundColor: checked ? tokens.colors.primary : tokens.colors.surface,
+              backgroundColor: checked ? tokens.colors.primary : tokens.colors.background,
             },
           ]}
         >
-          {checked ? <AppIcon name="checkmark" size={16} color={tokens.colors.onPrimary} /> : null}
+          {checked ? (
+            <AppIcon name="check" size={16} color={tokens.colors.textOnPrimary} strokeWidth={2.4} />
+          ) : null}
         </Pressable>
 
         <View style={styles.labelContainer}>{children}</View>
@@ -59,9 +61,9 @@ export function AppCheckbox({
       {hasError ? (
         <View
           accessibilityRole="alert"
-          style={[styles.errorRow, { marginTop: tokens.spacing.xxs + 2, gap: 4 }]}
+          style={[styles.errorRow, { marginTop: tokens.spacing.space1 + 2, gap: 6 }]}
         >
-          <AppIcon name="alert-circle-outline" size={14} color={tokens.colors.error} />
+          <AppIcon name="circle-alert" size={14} color={tokens.colors.error} />
           <Text
             testID={errorTestID}
             style={[

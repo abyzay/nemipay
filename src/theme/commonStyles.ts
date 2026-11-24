@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { lightColors } from './colors';
-import { elevations } from './elevations';
-import { radii } from './radii';
+import { radius } from './radius';
+import { shadows } from './shadows';
 import { layoutMetrics, spacing } from './spacing';
 
 export const commonStyles = StyleSheet.create({
@@ -16,17 +16,22 @@ export const commonStyles = StyleSheet.create({
     alignItems: 'center',
   },
   surfaceCard: {
-    backgroundColor: lightColors.surface,
-    borderRadius: radii.lg,
+    backgroundColor: lightColors.surfaceCard,
+    borderRadius: radius.radiusCard,
     borderWidth: 1,
     borderColor: lightColors.border,
     padding: layoutMetrics.cardPadding,
-    ...elevations.xs,
+    ...shadows.card,
+  },
+  secondaryCard: {
+    backgroundColor: lightColors.surface,
+    borderRadius: radius.radiusButton,
+    padding: layoutMetrics.cardPadding,
   },
   divider: {
     height: 1,
-    backgroundColor: lightColors.border,
-    marginVertical: spacing.sm,
+    backgroundColor: lightColors.divider,
+    marginVertical: spacing.space3,
   },
   touchTarget: {
     minHeight: layoutMetrics.minTouchTarget,

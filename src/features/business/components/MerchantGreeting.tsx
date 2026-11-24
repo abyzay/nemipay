@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { UserAvatar } from '@/components/ui';
+import { AppAvatar } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 
 export interface MerchantGreetingProps {
@@ -19,8 +19,8 @@ export function MerchantGreeting({
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.container, { gap: tokens.spacing.sm }]} testID="merchant-greeting">
-      <UserAvatar
+    <View style={[styles.container, { gap: tokens.spacing.space3 }]} testID="merchant-greeting">
+      <AppAvatar
         initials={initials}
         size={48}
         accessibilityLabel={`Avatar de ${ownerName}`}
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   },
   greetingTitle: {
     fontSize: 20,
-    lineHeight: 26,
+    lineHeight: 28,
     letterSpacing: -0.3,
   },
   greetingSubtitle: {

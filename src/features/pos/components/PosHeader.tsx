@@ -12,18 +12,18 @@ export function PosHeader({ onAddProductPress, onClosePress }: PosHeaderProps) {
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: tokens.spacing.xxs }]}>
-      <View style={[styles.leftGroup, { gap: tokens.spacing.xs }]}>
+    <View style={[styles.container, { paddingTop: tokens.spacing.space1 }]}>
+      <View style={[styles.leftGroup, { gap: tokens.spacing.space2 + 2 }]}>
         <View
           style={[
             styles.storeBadge,
             {
-              backgroundColor: tokens.colors.secondary,
-              borderRadius: tokens.radii.md,
+              backgroundColor: tokens.colors.lavender,
+              borderRadius: tokens.radius.radiusMD,
             },
           ]}
         >
-          <AppIcon name="storefront" size={20} color={tokens.colors.primary} />
+          <AppIcon name="store" size={18} color={tokens.colors.primary} />
         </View>
         <Text
           style={[
@@ -38,7 +38,7 @@ export function PosHeader({ onAddProductPress, onClosePress }: PosHeaderProps) {
         </Text>
       </View>
 
-      <View style={[styles.actionsGroup, { gap: tokens.spacing.xs }]}>
+      <View style={[styles.actionsGroup, { gap: tokens.spacing.space2 }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Agregar nuevo producto"
@@ -47,20 +47,20 @@ export function PosHeader({ onAddProductPress, onClosePress }: PosHeaderProps) {
           style={({ pressed }) => [
             styles.addButton,
             {
-              backgroundColor: pressed ? tokens.colors.border : tokens.colors.secondary,
-              borderRadius: tokens.radii.full,
-              paddingHorizontal: tokens.spacing.sm,
-              gap: tokens.spacing.xxs,
+              backgroundColor: pressed ? tokens.colors.lavenderBorder : tokens.colors.lavender,
+              borderRadius: tokens.radius.radiusFull,
+              paddingHorizontal: tokens.spacing.space3,
+              gap: tokens.spacing.space1,
             },
           ]}
         >
-          <AppIcon name="add" size={16} color={tokens.colors.primaryDark} />
+          <AppIcon name="plus" size={16} color={tokens.colors.primary} />
           <Text
             style={[
               styles.addLabel,
               {
                 fontFamily: tokens.typography.families.semiBold,
-                color: tokens.colors.primaryDark,
+                color: tokens.colors.primary,
               },
             ]}
           >
@@ -76,12 +76,13 @@ export function PosHeader({ onAddProductPress, onClosePress }: PosHeaderProps) {
           style={({ pressed }) => [
             styles.closeButton,
             {
-              borderRadius: tokens.radii.full,
-              backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
+              borderRadius: tokens.radius.radiusFull,
+              backgroundColor: pressed ? tokens.colors.surfaceSecondary : tokens.colors.surface,
+              borderColor: tokens.colors.border,
             },
           ]}
         >
-          <AppIcon name="close" size={22} color={tokens.colors.textPrimary} />
+          <AppIcon name="close" size={20} color={tokens.colors.textPrimary} />
         </Pressable>
       </View>
     </View>
@@ -93,21 +94,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: 48,
   },
   leftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   storeBadge: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 18,
-    lineHeight: 24,
+    lineHeight: 26,
   },
   actionsGroup: {
     flexDirection: 'row',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 34,
+    height: 36,
   },
   addLabel: {
     fontSize: 13,
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 36,
     height: 36,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

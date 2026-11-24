@@ -1,16 +1,16 @@
-import type { IoniconsIconName } from '@react-native-vector-icons/ionicons';
+import type { AppIconName } from '@/components/ui';
 import mockProducts from '../data/mockProducts.json';
 import type { PosCartItem, PosCategory, PosProduct } from '../types';
 
-const CATEGORY_ICON_MAP: Record<PosCategory, IoniconsIconName> = {
-  Bebidas: 'cafe-outline',
-  Alimentos: 'restaurant-outline',
-  Snacks: 'fast-food-outline',
-  Despensa: 'basket-outline',
-  Otros: 'pricetag-outline',
+const CATEGORY_ICON_MAP: Record<PosCategory, AppIconName> = {
+  Bebidas: 'coffee',
+  Alimentos: 'utensils',
+  Snacks: 'cookie',
+  Despensa: 'shopping-basket',
+  Otros: 'tag',
 };
 
-export function getDefaultIconForCategory(category: PosCategory): IoniconsIconName {
+export function getDefaultIconForCategory(category: PosCategory): AppIconName {
   return CATEGORY_ICON_MAP[category];
 }
 

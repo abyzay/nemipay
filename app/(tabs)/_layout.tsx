@@ -7,7 +7,7 @@ import { useAppTheme } from '@/hooks';
 export default function TabsLayout() {
   const { tokens } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, tokens.spacing.xs);
+  const bottomPadding = Math.max(insets.bottom, tokens.spacing.space2);
 
   return (
     <Tabs
@@ -16,17 +16,17 @@ export default function TabsLayout() {
         tabBarActiveTintColor: tokens.colors.primary,
         tabBarInactiveTintColor: tokens.colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: tokens.colors.surface,
-          borderTopColor: tokens.colors.border,
+          backgroundColor: tokens.colors.background,
+          borderTopColor: tokens.colors.divider,
           borderTopWidth: 1,
-          height: 58 + bottomPadding,
-          paddingTop: tokens.spacing.xxs + 2,
+          height: tokens.layout.tabBarBaseHeight + bottomPadding,
+          paddingTop: tokens.spacing.space2,
           paddingBottom: bottomPadding,
         },
         tabBarLabelStyle: {
           fontFamily: tokens.typography.families.semiBold,
           fontSize: 11,
-          lineHeight: 14,
+          lineHeight: 15,
         },
       }}
     >
@@ -36,8 +36,9 @@ export default function TabsLayout() {
           title: 'Inicio',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name={focused ? 'home' : 'home-outline'}
+              name="home"
               size={22}
+              strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
             />
           ),
@@ -49,8 +50,9 @@ export default function TabsLayout() {
           title: 'POS',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name={focused ? 'storefront' : 'storefront-outline'}
+              name="store"
               size={22}
+              strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
             />
           ),
@@ -62,8 +64,9 @@ export default function TabsLayout() {
           title: 'Actividad',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name={focused ? 'time' : 'time-outline'}
+              name="arrow-left-right"
               size={22}
+              strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
             />
           ),
@@ -75,8 +78,9 @@ export default function TabsLayout() {
           title: 'Reportes',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name={focused ? 'bar-chart' : 'bar-chart-outline'}
+              name="chart-no-axes-column"
               size={22}
+              strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
             />
           ),
@@ -88,8 +92,9 @@ export default function TabsLayout() {
           title: 'Perfil',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name={focused ? 'person' : 'person-outline'}
+              name="user-round"
               size={22}
+              strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
             />
           ),

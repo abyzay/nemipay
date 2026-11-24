@@ -1,4 +1,4 @@
-import type { IoniconsIconName } from '@react-native-vector-icons/ionicons';
+import type { AppIconName } from '@/components/ui';
 
 export type PosCategory = 'Bebidas' | 'Alimentos' | 'Snacks' | 'Despensa' | 'Otros';
 
@@ -15,7 +15,7 @@ export interface PosProduct {
   name: string;
   priceCents: number;
   category: PosCategory;
-  iconName: IoniconsIconName;
+  iconName: AppIconName;
   imageUri?: string;
 }
 

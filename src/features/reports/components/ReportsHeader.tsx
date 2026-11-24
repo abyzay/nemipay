@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppIcon } from '@/components/ui';
+import { Pressable, StyleSheet } from 'react-native';
+import { AppHeader, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 
 export interface ReportsHeaderProps {
@@ -12,40 +12,11 @@ export function ReportsHeader({ onBackPress, onCalendarPress }: ReportsHeaderPro
   const { tokens } = useAppTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: tokens.spacing.xxs }]}>
-      <View style={styles.sideSlot}>
-        {onBackPress ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Regresar al inicio"
-            onPress={onBackPress}
-            testID="reports-back-button"
-            style={({ pressed }) => [
-              styles.iconButton,
-              {
-                borderRadius: tokens.radii.full,
-                backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
-              },
-            ]}
-          >
-            <AppIcon name="chevron-back" size={24} color={tokens.colors.textPrimary} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      <Text
-        style={[
-          styles.title,
-          {
-            fontFamily: tokens.typography.families.bold,
-            color: tokens.colors.textPrimary,
-          },
-        ]}
-      >
-        Reportes
-      </Text>
-
-      <View style={[styles.sideSlot, styles.rightSlot]}>
+    <AppHeader
+      title="Reportes"
+      onBackPress={onBackPress}
+      backTestID="reports-back-button"
+      rightSlot={
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Seleccionar periodo"
@@ -54,41 +25,25 @@ export function ReportsHeader({ onBackPress, onCalendarPress }: ReportsHeaderPro
           style={({ pressed }) => [
             styles.iconButton,
             {
-              borderRadius: tokens.radii.full,
-              backgroundColor: pressed ? tokens.colors.secondary : 'transparent',
+              borderRadius: tokens.radius.radiusFull,
+              backgroundColor: pressed ? tokens.colors.lavenderSoft : tokens.colors.surface,
+              borderColor: tokens.colors.border,
             },
           ]}
         >
-          <AppIcon name="calendar-outline" size={22} color={tokens.colors.textPrimary} />
+          <AppIcon name="calendar" size={20} color={tokens.colors.textPrimary} />
         </Pressable>
-      </View>
-    </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 46,
-  },
-  sideSlot: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-  },
-  rightSlot: {
-    alignItems: 'flex-end',
-  },
   iconButton: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    lineHeight: 26,
   },
 });

@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Animated, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { AppButton, AppIcon, SurfaceCard } from '@/components/ui';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { AmountDisplay, PaymentStatus } from '@/components/financial';
+import { AppButton, AppCard, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import type { CurrencyCode } from '@/types/common';
-import { formatCurrencyFromCents } from '@/utils/currency';
 
 export interface PaymentReceivedModalProps {
   visible: boolean;
@@ -27,37 +33,38 @@ export function PaymentReceivedModal({
 }: PaymentReceivedModalProps) {
   const { tokens } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
-  const [badgeScale] = useState(() => new Animated.Value(0.6));
-  const [badgeOpacity] = useState(() => new Animated.Value(0));
+  const reducedMotion = useReducedMotion();
+  const badgeScale = useSharedValue(visible ? 1 : 0.8);
+  const badgeOpacity = useSharedValue(1);
 
   useEffect(() => {
     if (!visible) {
-      badgeScale.setValue(0.6);
-      badgeOpacity.setValue(0);
+      badgeScale.value = 0.8;
       return;
     }
 
-    Animated.parallel([
-      Animated.spring(badgeScale, {
-        toValue: 1,
-        friction: 6,
-        tension: 90,
-        useNativeDriver: true,
-      }),
-      Animated.timing(badgeOpacity, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [badgeOpacity, badgeScale, visible]);
+    if (reducedMotion) {
+      badgeScale.value = 1;
+      badgeOpacity.value = 1;
+      return;
+    }
+
+    badgeScale.value = 0.8;
+    badgeOpacity.value = 1;
+    badgeScale.value = withSpring(1, { damping: 12, stiffness: 180 });
+  }, [badgeOpacity, badgeScale, reducedMotion, visible]);
+
+  const badgeAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: badgeOpacity.value,
+    transform: [{ scale: badgeScale.value }],
+  }));
 
   const confettiColors = [
     tokens.colors.primary,
     tokens.colors.success,
     tokens.colors.warning,
-    tokens.colors.secondary,
-    tokens.colors.primaryDark,
+    tokens.colors.primaryLight,
+    tokens.colors.lavender,
   ];
 
   return (
@@ -68,28 +75,21 @@ export function PaymentReceivedModal({
       onRequestClose={onAccept}
       statusBarTranslucent
     >
-      <View style={[styles.backdrop, { backgroundColor: tokens.colors.primaryDark }]}>
-        <SurfaceCard
+      <View style={[styles.backdrop, { backgroundColor: tokens.colors.backdrop }]}>
+        <AppCard
+          variant="standard"
           testID="payment-received-modal"
           style={[
             styles.card,
-            tokens.elevations.md,
+            tokens.shadows.floating,
             {
-              borderRadius: tokens.radii.xl,
-              paddingHorizontal: tokens.spacing.lg,
-              paddingVertical: tokens.spacing.xl,
+              borderRadius: tokens.radius.radiusLarge,
+              paddingHorizontal: tokens.spacing.space6,
+              paddingVertical: tokens.spacing.space8,
             },
           ]}
         >
-          <Animated.View
-            style={[
-              styles.celebrationContainer,
-              {
-                opacity: badgeOpacity,
-                transform: [{ scale: badgeScale }],
-              },
-            ]}
-          >
+          <Animated.View style={[styles.celebrationContainer, badgeAnimatedStyle]}>
             {CELEBRATION_RAY_ANGLES.map((angle, index) => (
               <View
                 key={angle}
@@ -99,9 +99,9 @@ export function PaymentReceivedModal({
                   style={[
                     styles.rayDash,
                     {
-                      borderRadius: tokens.radii.full,
+                      borderRadius: tokens.radius.radiusFull,
                       backgroundColor:
-                        index % 2 === 0 ? tokens.colors.primary : tokens.colors.warning,
+                        index % 2 === 0 ? tokens.colors.primary : tokens.colors.success,
                     },
                   ]}
                 />
@@ -113,18 +113,23 @@ export function PaymentReceivedModal({
                 styles.checkCircle,
                 {
                   backgroundColor: tokens.colors.success,
-                  borderRadius: tokens.radii.full,
+                  borderRadius: tokens.radius.radiusFull,
                 },
               ]}
             >
               <AppIcon
-                name="checkmark"
-                size={46}
-                color={tokens.colors.onPrimary}
+                name="check"
+                size={42}
+                strokeWidth={2.5}
+                color={tokens.colors.textOnPrimary}
                 testID="payment-received-check-icon"
               />
             </View>
           </Animated.View>
+
+          <View style={{ marginTop: tokens.spacing.space4 }}>
+            <PaymentStatus status="confirmed" label="Operación exitosa" />
+          </View>
 
           <Text
             style={[
@@ -132,26 +137,21 @@ export function PaymentReceivedModal({
               {
                 fontFamily: tokens.typography.families.bold,
                 color: tokens.colors.textPrimary,
-                marginTop: tokens.spacing.lg,
+                marginTop: tokens.spacing.space3,
               },
             ]}
           >
             ¡Pago recibido!
           </Text>
 
-          <Text
+          <AmountDisplay
+            amountCents={amountCents}
+            currency={currency}
+            size="display"
+            tone="default"
             testID="payment-received-amount"
-            style={[
-              styles.amount,
-              {
-                fontFamily: tokens.typography.families.bold,
-                color: tokens.colors.textPrimary,
-                marginTop: tokens.spacing.xs,
-              },
-            ]}
-          >
-            {formatCurrencyFromCents(amountCents, { currency })}
-          </Text>
+            style={{ marginTop: tokens.spacing.space2 }}
+          />
 
           <Text
             testID="payment-received-time"
@@ -160,14 +160,14 @@ export function PaymentReceivedModal({
               {
                 fontFamily: tokens.typography.families.regular,
                 color: tokens.colors.textSecondary,
-                marginTop: tokens.spacing.xxs,
+                marginTop: tokens.spacing.space1,
               },
             ]}
           >
             {concept ? `${concept} · ${timeLabel}` : timeLabel}
           </Text>
 
-          <View style={[styles.buttonContainer, { marginTop: tokens.spacing.xl }]}>
+          <View style={[styles.buttonContainer, { marginTop: tokens.spacing.space8 }]}>
             <AppButton
               variant="primary"
               label="Aceptar"
@@ -175,7 +175,7 @@ export function PaymentReceivedModal({
               testID="payment-received-accept-button"
             />
           </View>
-        </SurfaceCard>
+        </AppCard>
 
         {visible ? (
           <View pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -202,7 +202,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    opacity: 0.98,
   },
   card: {
     width: '100%',
@@ -210,41 +209,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   celebrationContainer: {
-    width: 140,
-    height: 140,
+    width: 132,
+    height: 132,
     alignItems: 'center',
     justifyContent: 'center',
   },
   raySlot: {
     position: 'absolute',
-    width: 140,
-    height: 140,
+    width: 132,
+    height: 132,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
   rayDash: {
-    width: 5,
-    height: 16,
+    width: 4,
+    height: 14,
   },
   checkCircle: {
-    width: 84,
-    height: 84,
+    width: 82,
+    height: 82,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 24,
-    lineHeight: 30,
-    textAlign: 'center',
-  },
-  amount: {
-    fontSize: 38,
-    lineHeight: 46,
-    letterSpacing: -0.8,
+    lineHeight: 32,
     textAlign: 'center',
   },
   timeLabel: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
   },

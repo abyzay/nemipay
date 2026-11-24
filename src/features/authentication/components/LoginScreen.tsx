@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, AppTextField } from '@/components/ui';
+import { AppButton, AppInput } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { loginSchema, type LoginFormValues } from '../schemas';
 import { AuthHeader } from './AuthHeader';
@@ -41,7 +41,7 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
           <View>
             <AuthHeader onBackPress={onBackPress} />
 
-            <View style={[styles.headingGroup, { marginTop: tokens.spacing.sm }]}>
+            <View style={[styles.headingGroup, { marginTop: tokens.spacing.space3 }]}>
               <Text
                 style={[
                   styles.title,
@@ -57,9 +57,9 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
                 style={[
                   styles.subtitle,
                   {
-                    fontFamily: tokens.typography.families.medium,
-                    color: tokens.colors.textPrimary,
-                    marginTop: tokens.spacing.xs,
+                    fontFamily: tokens.typography.families.regular,
+                    color: tokens.colors.textSecondary,
+                    marginTop: tokens.spacing.space2,
                   },
                 ]}
               >
@@ -68,23 +68,24 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
             </View>
           </View>
 
-          <View style={[styles.illustrationGroup, { paddingVertical: tokens.spacing.sm }]}>
+          <View style={[styles.illustrationGroup, { paddingVertical: tokens.spacing.space3 }]}>
             <LoginIllustration testID="login-illustration" />
           </View>
 
           <View
             style={[
               styles.formGroup,
-              { gap: tokens.spacing.sm + 4, paddingBottom: tokens.spacing.md },
+              { gap: tokens.spacing.space4, paddingBottom: tokens.spacing.space4 },
             ]}
           >
             <Controller
               control={control}
               name="identifier"
               render={({ field: { onChange, onBlur, value } }) => (
-                <AppTextField
-                  leftIcon="person-outline"
-                  placeholder="Usuario, celular o correo electrónico"
+                <AppInput
+                  label="Usuario, celular o correo"
+                  leftIcon="user-round"
+                  placeholder="Ej. abyzay o 5512345678"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -104,9 +105,10 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
               control={control}
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
-                <AppTextField
-                  leftIcon="lock-closed-outline"
-                  placeholder="Contraseña"
+                <AppInput
+                  label="Contraseña"
+                  leftIcon="lock"
+                  placeholder="Ingresa tu contraseña"
                   isPassword
                   value={value}
                   onChangeText={onChange}
@@ -127,7 +129,7 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
               accessibilityRole="button"
               onPress={onForgotPasswordPress}
               testID="login-forgot-password-button"
-              style={styles.forgotButton}
+              style={({ pressed }) => [styles.forgotButton, { opacity: pressed ? 0.7 : 1 }]}
             >
               <Text
                 style={[
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
     textAlign: 'center',
   },
   illustrationGroup: {
@@ -191,7 +193,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   forgotText: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
   },
 });
