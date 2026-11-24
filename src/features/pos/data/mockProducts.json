@@ -1,0 +1,88 @@
+{
+  "products": [
+    {
+      "id": "prod_agua_600",
+      "name": "Agua 600ml",
+      "priceCents": 1500,
+      "category": "Bebidas",
+      "iconName": "water-outline"
+    },
+    {
+      "id": "prod_refresco_600",
+      "name": "Refresco 600ml",
+      "priceCents": 2200,
+      "category": "Bebidas",
+      "iconName": "cafe-outline"
+    },
+    {
+      "id": "prod_pan_dulce",
+      "name": "Pan dulce",
+      "priceCents": 1200,
+      "category": "Alimentos",
+      "iconName": "restaurant-outline"
+    },
+    {
+      "id": "prod_taco_pastor",
+      "name": "Taco al pastor",
+      "priceCents": 2000,
+      "category": "Alimentos",
+      "iconName": "fast-food-outline"
+    },
+    {
+      "id": "prod_quesadillas",
+      "name": "Orden quesadillas",
+      "priceCents": 6500,
+      "category": "Alimentos",
+      "iconName": "restaurant-outline"
+    },
+    {
+      "id": "prod_cafe_americano",
+      "name": "Café americano",
+      "priceCents": 2800,
+      "category": "Bebidas",
+      "iconName": "cafe-outline"
+    },
+    {
+      "id": "prod_jugo_natural",
+      "name": "Jugo natural",
+      "priceCents": 2600,
+      "category": "Bebidas",
+      "iconName": "nutrition-outline"
+    },
+    {
+      "id": "prod_papas_fritas",
+      "name": "Papas fritas",
+      "priceCents": 2000,
+      "category": "Snacks",
+      "iconName": "fast-food-outline"
+    },
+    {
+      "id": "prod_galletas",
+      "name": "Galletas surtidas",
+      "priceCents": 1800,
+      "category": "Snacks",
+      "iconName": "ice-cream-outline"
+    },
+    {
+      "id": "prod_leche_1l",
+      "name": "Leche entera 1L",
+      "priceCents": 2900,
+      "category": "Despensa",
+      "iconName": "cube-outline"
+    },
+    {
+      "id": "prod_huevo_12",
+      "name": "Huevo 12 pzas",
+      "priceCents": 4800,
+      "category": "Despensa",
+      "iconName": "basket-outline"
+    },
+    {
+      "id": "prod_hielo",
+      "name": "Bolsa de hielo",
+      "priceCents": 2500,
+      "category": "Otros",
+      "iconName": "pricetag-outline"
+    }
+  ]
+}

@@ -12,7 +12,16 @@ export type CollectMode = 'dynamic' | 'business';
 
 export interface CollectQrScreenProps {
   initialMode?: CollectMode;
+  initialAmountCents?: number;
+  initialConcept?: string;
   onBackPress: () => void;
+}
+
+function formatInitialAmount(amountCents?: number): string {
+  if (!amountCents || amountCents <= 0) {
+    return '250';
+  }
+  return (amountCents / 100).toFixed(2).replace(/\.00$/, '');
 }
 
 function formatCurrentTimeLabel(): string {
@@ -24,12 +33,19 @@ function formatCurrentTimeLabel(): string {
   return `${hours12}:${minutes} ${period}`;
 }
 
-export function CollectQrScreen({ initialMode = 'dynamic', onBackPress }: CollectQrScreenProps) {
+export function CollectQrScreen({
+  initialMode = 'dynamic',
+  initialAmountCents,
+  initialConcept,
+  onBackPress,
+}: CollectQrScreenProps) {
   const { tokens } = useAppTheme();
   const dashboardData = useMemo(() => getMockDashboardData(), []);
   const [mode, setMode] = useState<CollectMode>(initialMode);
-  const [amountInput, setAmountInput] = useState('250');
-  const [conceptInput, setConceptInput] = useState('Venta en mostrador');
+  const [amountInput, setAmountInput] = useState(() => formatInitialAmount(initialAmountCents));
+  const [conceptInput, setConceptInput] = useState(
+    () => initialConcept?.trim() || 'Venta en mostrador'
+  );
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [confirmedTimeLabel, setConfirmedTimeLabel] = useState(() => formatCurrentTimeLabel());
 

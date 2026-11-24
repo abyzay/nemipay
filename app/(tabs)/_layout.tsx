@@ -44,6 +44,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="pos"
+        options={{
+          title: 'POS',
+          tabBarIcon: ({ focused }) => (
+            <AppIcon
+              name={focused ? 'storefront' : 'storefront-outline'}
+              size={22}
+              color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="activity"
         options={{
           title: 'Actividad',

@@ -54,6 +54,14 @@
           "color": "#087F5B"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Permitir que NemiPay utilice la cámara para tomar fotos de tus productos.",
+          "photosPermission": "Permitir que NemiPay acceda a tus fotos para asignar imágenes a tus productos.",
+          "microphonePermission": false
+        }
+      ],
       "@react-native-vector-icons/ionicons"
     ]
   }
