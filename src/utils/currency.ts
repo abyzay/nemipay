@@ -3,6 +3,7 @@ import type { CurrencyCode } from '@/types/common';
 export interface FormatCurrencyOptions {
   currency?: CurrencyCode;
   showPlusSign?: boolean;
+  omitZeroCents?: boolean;
 }
 
 /**
@@ -13,7 +14,7 @@ export function formatCurrencyFromCents(
   amountCents: number,
   options: FormatCurrencyOptions = {}
 ): string {
-  const { showPlusSign = false } = options;
+  const { showPlusSign = false, omitZeroCents = false } = options;
   const isNegative = amountCents < 0;
   const absoluteCents = Math.abs(Math.round(amountCents));
   const wholeUnits = Math.floor(absoluteCents / 100);
@@ -22,6 +23,10 @@ export function formatCurrencyFromCents(
   const formattedWhole = wholeUnits.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const formattedCents = cents.toString().padStart(2, '0');
   const prefix = isNegative ? '-' : showPlusSign && absoluteCents > 0 ? '+' : '';
+
+  if (omitZeroCents && cents === 0) {
+    return `${prefix}$${formattedWhole}`;
+  }
 
   return `${prefix}$${formattedWhole}.${formattedCents}`;
 }

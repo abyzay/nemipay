@@ -6,6 +6,7 @@ import { AppButton, AppIcon, SurfaceCard } from '@/components/ui';
 import { getMockDashboardData } from '@/features/business/services';
 import { useAppTheme } from '@/hooks';
 import { formatCurrencyFromCents } from '@/utils/currency';
+import { PaymentReceivedModal } from './PaymentReceivedModal';
 
 export type CollectMode = 'dynamic' | 'business';
 
@@ -14,12 +15,23 @@ export interface CollectQrScreenProps {
   onBackPress: () => void;
 }
 
+function formatCurrentTimeLabel(): string {
+  const now = new Date();
+  const hours24 = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const period = hours24 >= 12 ? 'p.m.' : 'a.m.';
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  return `${hours12}:${minutes} ${period}`;
+}
+
 export function CollectQrScreen({ initialMode = 'dynamic', onBackPress }: CollectQrScreenProps) {
   const { tokens } = useAppTheme();
   const dashboardData = useMemo(() => getMockDashboardData(), []);
   const [mode, setMode] = useState<CollectMode>(initialMode);
-  const [amountInput, setAmountInput] = useState('150');
+  const [amountInput, setAmountInput] = useState('250');
   const [conceptInput, setConceptInput] = useState('Venta en mostrador');
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [confirmedTimeLabel, setConfirmedTimeLabel] = useState(() => formatCurrentTimeLabel());
 
   const parsedAmountCents = useMemo(() => {
     const cleaned = amountInput.replace(/[^0-9.]/g, '');
@@ -297,14 +309,34 @@ export function CollectQrScreen({ initialMode = 'dynamic', onBackPress }: Collec
         </View>
       </SurfaceCard>
 
-      <View style={{ paddingVertical: tokens.spacing.md }}>
+      <View style={{ paddingVertical: tokens.spacing.md, gap: tokens.spacing.sm }}>
         <AppButton
           variant="outlined"
           label="Volver al panel"
           onPress={onBackPress}
           testID="collect-done-button"
         />
+
+        {mode === 'dynamic' ? (
+          <AppButton
+            variant="primary"
+            label="Probar pago recibido"
+            onPress={() => {
+              setConfirmedTimeLabel(formatCurrentTimeLabel());
+              setPaymentModalVisible(true);
+            }}
+            testID="collect-test-payment-modal-button"
+          />
+        ) : null}
       </View>
+
+      <PaymentReceivedModal
+        visible={paymentModalVisible}
+        amountCents={parsedAmountCents > 0 ? parsedAmountCents : 25000}
+        timeLabel={confirmedTimeLabel}
+        concept={conceptInput.trim() || undefined}
+        onAccept={() => setPaymentModalVisible(false)}
+      />
     </ScreenContainer>
   );
 }
