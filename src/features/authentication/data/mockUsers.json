@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "id": "usr_abyzay_01",
+      "username": "abyzay",
+      "email": "abyzay@nemipay.mx",
+      "phone": "5512345678",
+      "password": "12345678",
+      "displayName": "Abyzay",
+      "role": "Propietario",
+      "businessId": "biz_nemipay_01"
+    }
+  ]
+}

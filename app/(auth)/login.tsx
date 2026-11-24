@@ -2,27 +2,40 @@ import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { Snackbar } from 'react-native-paper';
 import { LoginScreen } from '@/features/authentication/components';
+import type { LoginFormValues } from '@/features/authentication/schemas';
+import { authenticateWithMockJson } from '@/features/authentication/services';
 import { useAppTheme } from '@/hooks';
+import { useUiStore } from '@/stores';
 
 export default function LoginRoute() {
   const { tokens } = useAppTheme();
-  const [feedback, setFeedback] = useState<{ message: string; isSuccess: boolean } | null>(null);
+  const setAuthenticatedUser = useUiStore((state) => state.setAuthenticatedUser);
+  const [feedback, setFeedback] = useState<{ message: string; isError: boolean } | null>(null);
+
+  const handleLoginSubmit = (values: LoginFormValues) => {
+    const result = authenticateWithMockJson(values.identifier, values.password);
+
+    if (!result.success) {
+      setFeedback({
+        message: result.errorMessage,
+        isError: true,
+      });
+      return;
+    }
+
+    setAuthenticatedUser(result.user);
+    router.replace('/(tabs)');
+  };
 
   return (
     <>
       <LoginScreen
         onBackPress={() => router.back()}
-        onSubmit={() => {
-          setFeedback({
-            message:
-              'Datos validados correctamente. La conexión con el backend se integrará en la siguiente etapa.',
-            isSuccess: true,
-          });
-        }}
+        onSubmit={handleLoginSubmit}
         onForgotPasswordPress={() => {
           setFeedback({
-            message: 'La recuperación de contraseña estará disponible al conectar el backend.',
-            isSuccess: false,
+            message: 'Acceso temporal de prueba: usuario abyzay / contraseña 12345678.',
+            isError: false,
           });
         }}
       />
@@ -30,9 +43,9 @@ export default function LoginRoute() {
       <Snackbar
         visible={feedback !== null}
         onDismiss={() => setFeedback(null)}
-        duration={3000}
+        duration={3500}
         style={{
-          backgroundColor: feedback?.isSuccess ? tokens.colors.success : tokens.colors.primaryDark,
+          backgroundColor: feedback?.isError ? tokens.colors.error : tokens.colors.primaryDark,
         }}
       >
         {feedback?.message ?? ''}

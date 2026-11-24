@@ -1,0 +1,33 @@
+{
+  "merchant": {
+    "id": "biz_nemipay_01",
+    "ownerName": "Abyzay",
+    "businessName": "Taquería El Nemi",
+    "greetingSubtitle": "Que tengas un gran día",
+    "avatarInitials": "AB",
+    "codiAlias": "NEMIPAY-TAQ-001",
+    "clabeMasked": "•••• 4821",
+    "bankName": "BBVA México"
+  },
+  "summary": {
+    "currency": "MXN",
+    "todayReceivedCents": 485000,
+    "todayCount": 14,
+    "availableSettledCents": 1845000,
+    "unreadNotifications": 2
+  },
+  "notifications": [
+    {
+      "id": "notif_01",
+      "title": "Cobro CoDi confirmado",
+      "body": "Recibiste $185.00 MXN por Venta mostrador #108.",
+      "timeLabel": "Hace 12 min"
+    },
+    {
+      "id": "notif_02",
+      "title": "Cobro CoDi confirmado",
+      "body": "Recibiste $340.00 MXN por Pedido para llevar #107.",
+      "timeLabel": "Hace 47 min"
+    }
+  ]
+}

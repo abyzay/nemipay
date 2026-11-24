@@ -1,0 +1,28 @@
+{
+  "periods": [
+    {
+      "id": "today",
+      "label": "Hoy",
+      "totalReceivedCents": 485000,
+      "paymentsCount": 14,
+      "averageTicketCents": 34643,
+      "qrSharePercent": 78
+    },
+    {
+      "id": "week",
+      "label": "Esta semana",
+      "totalReceivedCents": 2845000,
+      "paymentsCount": 82,
+      "averageTicketCents": 34695,
+      "qrSharePercent": 81
+    },
+    {
+      "id": "month",
+      "label": "Este mes",
+      "totalReceivedCents": 11290000,
+      "paymentsCount": 326,
+      "averageTicketCents": 34632,
+      "qrSharePercent": 84
+    }
+  ]
+}

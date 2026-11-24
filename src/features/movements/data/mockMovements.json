@@ -1,0 +1,59 @@
+{
+  "movements": [
+    {
+      "id": "mov_108",
+      "concept": "Venta mostrador #108",
+      "payerReference": "Cliente CoDi ••8412",
+      "amountCents": 18500,
+      "currency": "MXN",
+      "timeLabel": "Hoy, 2:15 p.m.",
+      "status": "confirmed",
+      "channel": "codi_qr",
+      "iconName": "qr-code-outline"
+    },
+    {
+      "id": "mov_107",
+      "concept": "Pedido para llevar #107",
+      "payerReference": "Cliente CoDi ••3901",
+      "amountCents": 34000,
+      "currency": "MXN",
+      "timeLabel": "Hoy, 1:40 p.m.",
+      "status": "confirmed",
+      "channel": "codi_qr",
+      "iconName": "storefront-outline"
+    },
+    {
+      "id": "mov_106",
+      "concept": "Orden mesa 3 #106",
+      "payerReference": "Cliente CoDi ••7724",
+      "amountCents": 9500,
+      "currency": "MXN",
+      "timeLabel": "Hoy, 12:18 p.m.",
+      "status": "confirmed",
+      "channel": "codi_push",
+      "iconName": "receipt-outline"
+    },
+    {
+      "id": "mov_105",
+      "concept": "Combo familiar #105",
+      "payerReference": "Cliente CoDi ••1105",
+      "amountCents": 52000,
+      "currency": "MXN",
+      "timeLabel": "Ayer, 8:45 p.m.",
+      "status": "confirmed",
+      "channel": "codi_qr",
+      "iconName": "qr-code-outline"
+    },
+    {
+      "id": "mov_104",
+      "concept": "Venta mostrador #104",
+      "payerReference": "Cliente CoDi ••6590",
+      "amountCents": 23000,
+      "currency": "MXN",
+      "timeLabel": "Ayer, 6:32 p.m.",
+      "status": "confirmed",
+      "channel": "codi_qr",
+      "iconName": "storefront-outline"
+    }
+  ]
+}

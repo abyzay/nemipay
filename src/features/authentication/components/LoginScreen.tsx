@@ -83,8 +83,8 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
               name="identifier"
               render={({ field: { onChange, onBlur, value } }) => (
                 <AppTextField
-                  leftIcon="mail-outline"
-                  placeholder="Celular o correo electrónico"
+                  leftIcon="person-outline"
+                  placeholder="Usuario, celular o correo electrónico"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 function isValidMexicanPhone(value: string): boolean {
   const digits = value.replace(/\D/g, '');
@@ -11,13 +12,17 @@ function isValidEmail(value: string): boolean {
   return EMAIL_REGEX.test(value.trim());
 }
 
+function isValidUsername(value: string): boolean {
+  return USERNAME_REGEX.test(value.trim());
+}
+
 export const loginSchema = z.object({
   identifier: z
     .string()
     .trim()
     .min(1, 'Ingresa tu celular o correo electrónico.')
     .refine(
-      (value) => isValidEmail(value) || isValidMexicanPhone(value),
+      (value) => isValidEmail(value) || isValidMexicanPhone(value) || isValidUsername(value),
       'Ingresa un correo electrónico válido o un celular de 10 dígitos.'
     ),
   password: z

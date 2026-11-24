@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { AppProviders } from '@/components/layout';
 import { createQueryClient } from '@/config/queryClient';
 import { LoginScreen, RegisterScreen } from '@/features/authentication/components';
+import { authenticateWithMockJson } from '@/features/authentication/services';
 import { lightColors } from '@/theme';
 
 jest.mock('@react-native-vector-icons/ionicons', () => {
@@ -108,6 +109,36 @@ describe('LoginScreen con validación Zod', () => {
     await fireEvent.press(screen.getByTestId('login-forgot-password-button'));
     expect(onBackPress).toHaveBeenCalledTimes(1);
     expect(onForgotPasswordPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('permite iniciar sesión con el usuario demo abyzay y contraseña 12345678 desde JSON', async () => {
+    const onBackPress = jest.fn();
+    const onSubmit = jest.fn();
+
+    await renderWithProviders(<LoginScreen onBackPress={onBackPress} onSubmit={onSubmit} />);
+
+    await fireEvent.changeText(screen.getByTestId('login-identifier-input'), 'abyzay');
+    await fireEvent.changeText(screen.getByTestId('login-password-input'), '12345678');
+    await fireEvent.press(screen.getByTestId('login-submit-button'));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        {
+          identifier: 'abyzay',
+          password: '12345678',
+        },
+        expect.anything()
+      );
+    });
+
+    const validResult = authenticateWithMockJson('abyzay', '12345678');
+    expect(validResult.success).toBe(true);
+    if (validResult.success) {
+      expect(validResult.user.username).toBe('abyzay');
+    }
+
+    const invalidResult = authenticateWithMockJson('abyzay', 'wrongpass');
+    expect(invalidResult.success).toBe(false);
   });
 });
 
