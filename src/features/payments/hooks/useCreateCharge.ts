@@ -16,6 +16,7 @@ export function useCreateCharge() {
     mutationFn: ({ input, idempotencyKey }) => createCharge(input, idempotencyKey),
     onSuccess: (charge) => {
       queryClient.setQueryData(paymentKeys.charge(charge.id), charge);
+      void queryClient.invalidateQueries({ queryKey: [...paymentKeys.all, 'movements'] });
     },
   });
 }

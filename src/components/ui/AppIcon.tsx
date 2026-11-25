@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import {
+  AlignLeft,
   ArrowDown,
   ArrowDownLeft,
   ArrowLeftRight,
@@ -33,6 +34,7 @@ import {
   Image as ImageIcon,
   Lock,
   Mail,
+  Menu,
   Minus,
   Pencil,
   Phone,
@@ -46,6 +48,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingBasket,
+  SlidersHorizontal,
   Store,
   Tag,
   TimerOff,
@@ -62,6 +65,9 @@ import { useAppTheme } from '@/hooks';
 const LUCIDE_ICON_MAP = {
   // Navegación y acciones principales requeridas por el Design System
   Home,
+  AlignLeft,
+  Menu,
+  SlidersHorizontal,
   ArrowLeftRight,
   UserRound,
   QrCode,
@@ -121,6 +127,9 @@ const LUCIDE_ICON_MAP = {
   // Aliases kebab-case para uso uniforme y compatibilidad con datos existentes
   home: Home,
   'home-outline': Home,
+  'align-left': AlignLeft,
+  menu: Menu,
+  'sliders-horizontal': SlidersHorizontal,
   'arrow-left-right': ArrowLeftRight,
   'user-round': UserRound,
   person: UserRound,

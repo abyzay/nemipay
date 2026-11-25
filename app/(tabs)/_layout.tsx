@@ -40,10 +40,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Cobrar',
+          title: 'Inicio',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name="qr-code"
+              name="home"
               size={22}
               strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
@@ -54,10 +54,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="activity"
         options={{
-          title: 'Hoy',
+          title: 'Movimientos',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name="arrow-left-right"
+              name="align-left"
               size={22}
               strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
@@ -68,7 +68,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Cuenta',
+          title: 'Perfil',
           tabBarIcon: ({ focused }) => (
             <AppIcon
               name="user-round"

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ScreenContainer } from '@/components/layout';
-import { AppBadge, AppButton } from '@/components/ui';
+import { AppBadge, AppButton, AppIcon } from '@/components/ui';
 import { PosScreen } from '@/features/pos/components';
 import { useProductsQuery } from '@/features/pos/hooks/useProducts';
 import { useAppTheme } from '@/hooks';
@@ -13,7 +13,12 @@ import { startShiftAnnouncement } from '../services/announce';
 import { fetchDailySummary } from '../services/chargesService';
 import { FreeAmountKeypad } from './FreeAmountKeypad';
 
-export function CobrarScreen() {
+export interface CobrarScreenProps {
+  initialMode?: ChargeEntryMode;
+  onBackPress?: () => void;
+}
+
+export function CobrarScreen({ initialMode, onBackPress }: CobrarScreenProps = {}) {
   const { tokens } = useAppTheme();
   const authenticatedUser = useUiStore((state) => state.authenticatedUser);
   const shiftActive = useUiStore((state) => state.shiftActive);
@@ -29,6 +34,13 @@ export function CobrarScreen() {
   });
 
   const userManuallySwitchedRef = useRef(false);
+
+  useEffect(() => {
+    if (initialMode) {
+      userManuallySwitchedRef.current = true;
+      setLastChargeMode(initialMode);
+    }
+  }, [initialMode, setLastChargeMode]);
 
   useEffect(() => {
     if (
@@ -64,6 +76,23 @@ export function CobrarScreen() {
         ]}
       >
         <View style={styles.topHeader}>
+          {onBackPress ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Regresar"
+              onPress={onBackPress}
+              testID="cobrar-back-button"
+              style={({ pressed }) => [
+                styles.backButton,
+                {
+                  borderRadius: tokens.radius.radiusFull,
+                  backgroundColor: pressed ? tokens.colors.lavenderSoft : 'transparent',
+                },
+              ]}
+            >
+              <AppIcon name="chevron-left" size={24} color={tokens.colors.textPrimary} />
+            </Pressable>
+          ) : null}
           <View style={styles.summaryPill}>
             <Text
               testID="cobrar-today-summary"
@@ -166,6 +195,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -8,
   },
   summaryPill: {
     flex: 1,

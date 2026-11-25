@@ -1,6 +1,6 @@
 import React from 'react';
-import { CobrarScreen } from '@/features/payments/components';
+import { DashboardScreen } from '@/features/dashboard/components';
 
-export default function CobrarRoute() {
-  return <CobrarScreen />;
+export default function DashboardRoute() {
+  return <DashboardScreen />;
 }

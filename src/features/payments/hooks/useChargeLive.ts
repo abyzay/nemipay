@@ -36,6 +36,7 @@ export function useChargeLive(chargeId: string | undefined) {
           if (updated.status === 'CONFIRMED') {
             void queryClient.invalidateQueries({ queryKey: paymentKeys.dailySummary() });
             void queryClient.invalidateQueries({ queryKey: paymentKeys.chargesToday() });
+            void queryClient.invalidateQueries({ queryKey: [...paymentKeys.all, 'movements'] });
           }
         })
         .catch(() => {
@@ -59,6 +60,7 @@ export function useChargeLive(chargeId: string | undefined) {
           if (updated.status === 'CONFIRMED') {
             void queryClient.invalidateQueries({ queryKey: paymentKeys.dailySummary() });
             void queryClient.invalidateQueries({ queryKey: paymentKeys.chargesToday() });
+            void queryClient.invalidateQueries({ queryKey: [...paymentKeys.all, 'movements'] });
           }
         }
       )
