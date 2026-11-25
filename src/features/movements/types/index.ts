@@ -3,6 +3,8 @@ import type { CurrencyCode } from '@/types/common';
 
 export type MovementStatus = ChargeStatus;
 
+export type MovementFilter = 'all' | 'received' | 'pending' | 'other';
+
 export interface TodayMovement {
   id: string;
   concept: string;
@@ -11,4 +13,11 @@ export interface TodayMovement {
   timeLabel: string;
   status: MovementStatus;
   paidAfterExpiry: boolean;
+  createdAt: string;
+}
+
+export interface MovementsPage {
+  items: TodayMovement[];
+  nextPage: number | null;
+  totalCount: number | null;
 }
