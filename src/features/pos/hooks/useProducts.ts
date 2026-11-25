@@ -49,11 +49,11 @@ export function useCreateProductsBatchMutation(merchantId: string | undefined) {
   });
 }
 
-export function useUpdateProductMutation() {
+export function useUpdateProductMutation(merchantId?: string) {
   const queryClient = useQueryClient();
   return useMutation<PosProduct, Error, { productId: string; draft: PosProductDraft }>({
     retry: false,
-    mutationFn: ({ productId, draft }) => updateProduct(productId, draft),
+    mutationFn: ({ productId, draft }) => updateProduct(productId, draft, merchantId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: paymentKeys.products() });
     },

@@ -97,6 +97,11 @@ export function DashboardScreen() {
     router.push('/cobrar');
   };
 
+  const handleOpenPos = () => {
+    setLastChargeMode('products');
+    router.push('/pos');
+  };
+
   const handleOpenActivity = () => {
     router.push('/activity');
   };
@@ -121,9 +126,7 @@ export function DashboardScreen() {
       id: 'pos',
       label: 'POS',
       icon: 'store',
-      onPress: () => {
-        // POS queda reservado sin acción por ahora
-      },
+      onPress: handleOpenPos,
       testID: 'dashboard-action-pos',
     },
     {

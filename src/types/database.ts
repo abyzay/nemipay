@@ -30,12 +30,57 @@ export interface Database {
         };
         Relationships: [];
       };
+      categories: {
+        Row: {
+          id: string;
+          merchant_id: string;
+          name: string;
+          description: string | null;
+          image_url: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          merchant_id: string;
+          name: string;
+          description?: string | null;
+          image_url?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          merchant_id?: string;
+          name?: string;
+          description?: string | null;
+          image_url?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'categories_merchant_id_fkey';
+            columns: ['merchant_id'];
+            isOneToOne: false;
+            referencedRelation: 'merchants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       products: {
         Row: {
           id: string;
           merchant_id: string;
           name: string;
           price_cents: number;
+          description: string | null;
+          category: string;
+          category_id: string | null;
+          image_url: string | null;
           active: boolean;
           created_at: string;
           updated_at: string;
@@ -45,6 +90,10 @@ export interface Database {
           merchant_id: string;
           name: string;
           price_cents: number;
+          description?: string | null;
+          category?: string;
+          category_id?: string | null;
+          image_url?: string | null;
           active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -54,6 +103,10 @@ export interface Database {
           merchant_id?: string;
           name?: string;
           price_cents?: number;
+          description?: string | null;
+          category?: string;
+          category_id?: string | null;
+          image_url?: string | null;
           active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -64,6 +117,13 @@ export interface Database {
             columns: ['merchant_id'];
             isOneToOne: false;
             referencedRelation: 'merchants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'products_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'categories';
             referencedColumns: ['id'];
           },
         ];

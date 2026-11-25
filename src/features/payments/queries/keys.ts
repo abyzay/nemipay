@@ -10,5 +10,6 @@ export const paymentKeys = {
   recentMovements: () => [...paymentKeys.all, 'movements', 'recent'] as const,
   dailySummary: () => [...paymentKeys.all, 'daily-summary'] as const,
   products: () => ['products'] as const,
+  categories: () => ['categories'] as const,
   merchant: (userId: string) => ['merchant', userId] as const,
 } as const;

@@ -22,6 +22,35 @@ jest.mock('expo-crypto', () => ({
   digestStringAsync: jest.fn(async () => 'mock-sha256'),
 }));
 
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
+  requestMediaLibraryPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
+  launchCameraAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+  launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+}));
+
+jest.mock('expo-image-manipulator', () => ({
+  SaveFormat: {
+    JPEG: 'jpeg',
+    PNG: 'png',
+    WEBP: 'webp',
+  },
+  ImageManipulator: {
+    manipulate: jest.fn(() => ({
+      renderAsync: jest.fn(async () => ({
+        saveAsync: jest.fn(async () => ({
+          uri: 'file:///tmp/compressed.webp',
+          width: 800,
+          height: 800,
+          base64: 'd2VicA==',
+        })),
+        release: jest.fn(),
+      })),
+      release: jest.fn(),
+    })),
+  },
+}));
+
 jest.mock('react-native-reanimated', () => {
   const { View, Text, ScrollView, FlatList, Image } = require('react-native');
 

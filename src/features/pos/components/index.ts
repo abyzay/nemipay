@@ -1,5 +1,15 @@
+export { PosCatalogCard, resolvePosCategoryIcon } from './PosCatalogCard';
+export type { PosCatalogCardProps } from './PosCatalogCard';
+export { PosCategoryCard } from './PosCategoryCard';
+export type { PosCategoryCardProps } from './PosCategoryCard';
+export { PosCategoryFormModal } from './PosCategoryFormModal';
+export type { PosCategoryFormModalProps } from './PosCategoryFormModal';
 export { PosCheckoutBar } from './PosCheckoutBar';
 export type { PosCheckoutBarProps } from './PosCheckoutBar';
+export { PosImagePickerField } from './PosImagePickerField';
+export type { PosImagePickerFieldProps, PosPickedImage } from './PosImagePickerField';
+export { PosOrderSummaryModal } from './PosOrderSummaryModal';
+export type { PosOrderSummaryModalProps } from './PosOrderSummaryModal';
 export { PosProductCard } from './PosProductCard';
 export type { PosProductCardProps } from './PosProductCard';
 export { PosProductFormModal } from './PosProductFormModal';

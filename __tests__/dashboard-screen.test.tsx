@@ -164,9 +164,10 @@ describe('DashboardScreen (Inicio)', () => {
       expect(screen.getByTestId('dashboard-movement-row-chg-1')).toBeOnTheScreen();
     });
 
-    // POS no hace nada por ahora
+    // POS navega a /pos y actualiza modo de cobro
     await fireEvent.press(screen.getByTestId('dashboard-action-pos'));
-    expect(router.push).not.toHaveBeenCalled();
+    expect(useUiStore.getState().lastChargeMode).toBe('products');
+    expect(router.push).toHaveBeenCalledWith('/pos');
 
     // Cobrar con QR lleva a monto libre (/cobrar)
     await fireEvent.press(screen.getByTestId('dashboard-action-qr'));

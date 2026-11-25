@@ -1,11 +1,17 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { AppButton, AppChip, AppEmptyState } from '@/components/ui';
+import { AppButton, AppChip, AppEmptyState, AppHeader, AppIcon } from '@/components/ui';
 import { useCreateCharge } from '@/features/payments/hooks/useCreateCharge';
 import { useAppTheme } from '@/hooks';
 import { generateIdempotencyKey } from '@/services/security/crypto';
 import { useUiStore } from '@/stores';
+import {
+  useArchiveCategoryMutation,
+  useCategoriesQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+} from '../hooks/useCategories';
 import {
   useArchiveProductMutation,
   useCreateProductMutation,
@@ -14,40 +20,118 @@ import {
   useUpdateProductMutation,
 } from '../hooks/useProducts';
 import {
+  DEFAULT_POS_CATEGORY,
   POS_TEMPLATES,
   calculateCartTotalCents,
   calculateCartUnitsCount,
 } from '../services/productsService';
-import type { PosCartItem, PosProduct, PosProductDraft } from '../types';
+import type {
+  PosCartItem,
+  PosCategory,
+  PosCategoryDraft,
+  PosProduct,
+  PosProductDraft,
+} from '../types';
+import { PosCategoryCard } from './PosCategoryCard';
+import { PosCategoryFormModal } from './PosCategoryFormModal';
 import { PosCheckoutBar } from './PosCheckoutBar';
+import { PosOrderSummaryModal } from './PosOrderSummaryModal';
 import { PosProductCard } from './PosProductCard';
 import { PosProductFormModal } from './PosProductFormModal';
-import { PosTotalBanner } from './PosTotalBanner';
 
 export interface PosScreenProps {
+  onBackPress?: () => void;
   onChargeCreated?: (chargeId: string) => void;
 }
 
-export function PosScreen({ onChargeCreated }: PosScreenProps) {
+type PosBrowseTab = 'products' | 'categories';
+
+function chunkItems<T>(items: readonly T[], size: number): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    rows.push(items.slice(i, i + size));
+  }
+  return rows;
+}
+
+function matchesProductCategory(product: PosProduct, category: PosCategory): boolean {
+  if (product.categoryId && product.categoryId === category.id) {
+    return true;
+  }
+  return (
+    (product.category?.trim().toLowerCase() || DEFAULT_POS_CATEGORY.toLowerCase()) ===
+    category.name.trim().toLowerCase()
+  );
+}
+
+export function PosScreen({ onBackPress, onChargeCreated }: PosScreenProps) {
   const { tokens } = useAppTheme();
   const authenticatedUser = useUiStore((state) => state.authenticatedUser);
   const merchantId = authenticatedUser?.id;
 
   const productsQuery = useProductsQuery(Boolean(merchantId));
+  const categoriesQuery = useCategoriesQuery(Boolean(merchantId));
+
   const createProductMutation = useCreateProductMutation(merchantId);
   const createBatchMutation = useCreateProductsBatchMutation(merchantId);
-  const updateProductMutation = useUpdateProductMutation();
+  const updateProductMutation = useUpdateProductMutation(merchantId);
   const archiveProductMutation = useArchiveProductMutation();
+
+  const createCategoryMutation = useCreateCategoryMutation(merchantId);
+  const updateCategoryMutation = useUpdateCategoryMutation(merchantId);
+  const archiveCategoryMutation = useArchiveCategoryMutation();
+
   const createChargeMutation = useCreateCharge();
 
+  const [browseTab, setBrowseTab] = useState<PosBrowseTab>('products');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<PosCartItem[]>([]);
-  const [formVisible, setFormVisible] = useState(false);
+  const [activeProductId, setActiveProductId] = useState<string | null>(null);
+  const [summaryVisible, setSummaryVisible] = useState(false);
+
+  const [productFormVisible, setProductFormVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<PosProduct | null>(null);
+
+  const [categoryFormVisible, setCategoryFormVisible] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<PosCategory | null>(null);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const idempotencyKeyRef = useRef<string | null>(null);
+  const lastSingleTapRef = useRef<{ productId: string; previousActiveId: string | null } | null>(
+    null
+  );
 
-  const products = productsQuery.data ?? [];
+  const products = useMemo(() => productsQuery.data ?? [], [productsQuery.data]);
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+
+  const selectedCategory = useMemo(
+    () => categories.find((cat) => cat.id === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId]
+  );
+
+  const productCountsByCategoryId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const category of categories) {
+      map.set(
+        category.id,
+        products.filter((product) => matchesProductCategory(product, category)).length
+      );
+    }
+    return map;
+  }, [categories, products]);
+
+  const visibleProducts = useMemo(() => {
+    if (browseTab === 'categories' && selectedCategory) {
+      return products.filter((product) => matchesProductCategory(product, selectedCategory));
+    }
+    return products;
+  }, [browseTab, products, selectedCategory]);
+
+  const productRows = useMemo(() => chunkItems(visibleProducts, 3), [visibleProducts]);
+  const categoryRows = useMemo(() => chunkItems(categories, 3), [categories]);
+
+  const isCategoryOverview = browseTab === 'categories' && selectedCategory === null;
 
   const quantitiesById = useMemo(() => {
     const map = new Map<string, number>();
@@ -57,6 +141,15 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
     return map;
   }, [cartItems]);
 
+  const activeItem = useMemo(() => {
+    if (cartItems.length === 0) return null;
+    if (activeProductId) {
+      const matched = cartItems.find((item) => item.product.id === activeProductId);
+      if (matched) return matched;
+    }
+    return cartItems[cartItems.length - 1] ?? null;
+  }, [activeProductId, cartItems]);
+
   const totalCents = useMemo(() => calculateCartTotalCents(cartItems), [cartItems]);
   const unitsCount = useMemo(() => calculateCartUnitsCount(cartItems), [cartItems]);
 
@@ -64,9 +157,19 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
     idempotencyKeyRef.current = null;
   };
 
-  const handleIncrementProduct = (product: PosProduct) => {
+  const incrementProduct = (product: PosProduct, trackAsSingleTap = false) => {
     setErrorMessage(null);
     resetIdempotencyIntent();
+    if (trackAsSingleTap) {
+      lastSingleTapRef.current = {
+        productId: product.id,
+        previousActiveId: activeProductId,
+      };
+    } else {
+      lastSingleTapRef.current = null;
+    }
+
+    setActiveProductId(product.id);
     setCartItems((prev) => {
       const existingIndex = prev.findIndex((item) => item.product.id === product.id);
       if (existingIndex === -1) {
@@ -78,22 +181,73 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
     });
   };
 
-  const handleDecrementProduct = (productId: string) => {
+  const decrementProduct = (productId: string) => {
     setErrorMessage(null);
     resetIdempotencyIntent();
-    setCartItems((prev) =>
-      prev
+    lastSingleTapRef.current = null;
+    setCartItems((prev) => {
+      const next = prev
         .map((item) =>
           item.product.id === productId ? { ...item, quantity: item.quantity - 1 } : item
         )
-        .filter((item) => item.quantity > 0)
-    );
+        .filter((item) => item.quantity > 0);
+      if (next.length === 0) {
+        setSummaryVisible(false);
+        setActiveProductId(null);
+      } else if (activeProductId === productId && !next.some((i) => i.product.id === productId)) {
+        setActiveProductId(next[next.length - 1]?.product.id ?? null);
+      }
+      return next;
+    });
+  };
+
+  const removeProductFromCart = (productId: string) => {
+    setErrorMessage(null);
+    resetIdempotencyIntent();
+    lastSingleTapRef.current = null;
+    setCartItems((prev) => {
+      const next = prev.filter((item) => item.product.id !== productId);
+      if (next.length === 0) {
+        setSummaryVisible(false);
+        setActiveProductId(null);
+      } else if (activeProductId === productId) {
+        setActiveProductId(next[next.length - 1]?.product.id ?? null);
+      }
+      return next;
+    });
   };
 
   const handleClearCart = () => {
     setErrorMessage(null);
     resetIdempotencyIntent();
+    lastSingleTapRef.current = null;
+    setSummaryVisible(false);
+    setActiveProductId(null);
     setCartItems([]);
+  };
+
+  const handleDoubleTapEditProduct = (product: PosProduct) => {
+    const pendingTap = lastSingleTapRef.current;
+    if (pendingTap && pendingTap.productId === product.id) {
+      lastSingleTapRef.current = null;
+      resetIdempotencyIntent();
+      setCartItems((prev) =>
+        prev
+          .map((item) =>
+            item.product.id === product.id ? { ...item, quantity: item.quantity - 1 } : item
+          )
+          .filter((item) => item.quantity > 0)
+      );
+      setActiveProductId(pendingTap.previousActiveId);
+    }
+    setEditingProduct(product);
+    setProductFormVisible(true);
+  };
+
+  const handleLongPressEditProduct = (product: PosProduct) => {
+    lastSingleTapRef.current = null;
+    setEditingProduct(product);
+    setProductFormVisible(true);
   };
 
   const handleSaveProduct = async (draft: PosProductDraft, existingId?: string) => {
@@ -109,7 +263,7 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
       } else {
         await createProductMutation.mutateAsync(draft);
       }
-      setFormVisible(false);
+      setProductFormVisible(false);
       setEditingProduct(null);
     } catch (error) {
       setErrorMessage(
@@ -122,14 +276,42 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
     setErrorMessage(null);
     try {
       await archiveProductMutation.mutateAsync(productId);
-      setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
-      resetIdempotencyIntent();
-      setFormVisible(false);
+      removeProductFromCart(productId);
+      setProductFormVisible(false);
       setEditingProduct(null);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : 'No pudimos eliminar el producto o servicio.'
       );
+    }
+  };
+
+  const handleSaveCategory = async (draft: PosCategoryDraft, existingId?: string) => {
+    setErrorMessage(null);
+    try {
+      if (existingId) {
+        await updateCategoryMutation.mutateAsync({ categoryId: existingId, draft });
+      } else {
+        await createCategoryMutation.mutateAsync(draft);
+      }
+      setCategoryFormVisible(false);
+      setEditingCategory(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'No pudimos guardar la categoría.');
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    setErrorMessage(null);
+    try {
+      await archiveCategoryMutation.mutateAsync(categoryId);
+      if (selectedCategoryId === categoryId) {
+        setSelectedCategoryId(null);
+      }
+      setCategoryFormVisible(false);
+      setEditingCategory(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'No pudimos eliminar la categoría.');
     }
   };
 
@@ -144,7 +326,7 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
     }
   };
 
-  const handleQrCheckout = async () => {
+  const handleGenerateQrCharge = async () => {
     if (totalCents < 100 || createChargeMutation.isPending) {
       return;
     }
@@ -165,7 +347,9 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
         idempotencyKey: idempotencyKeyRef.current,
       });
 
+      setSummaryVisible(false);
       setCartItems([]);
+      setActiveProductId(null);
       resetIdempotencyIntent();
 
       if (onChargeCreated) {
@@ -178,13 +362,28 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
     }
   };
 
+  const handleHeaderAddPress = () => {
+    if (isCategoryOverview) {
+      setEditingCategory(null);
+      setCategoryFormVisible(true);
+    } else {
+      setEditingProduct(null);
+      setProductFormVisible(true);
+    }
+  };
+
   const isMutatingProduct =
     createProductMutation.isPending ||
     updateProductMutation.isPending ||
     archiveProductMutation.isPending ||
     createBatchMutation.isPending;
 
-  if (productsQuery.isLoading) {
+  const isMutatingCategory =
+    createCategoryMutation.isPending ||
+    updateCategoryMutation.isPending ||
+    archiveCategoryMutation.isPending;
+
+  if (productsQuery.isLoading || categoriesQuery.isLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={tokens.colors.primary} />
@@ -194,12 +393,213 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
 
   return (
     <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
-      <PosTotalBanner
-        onAddPress={() => {
-          setEditingProduct(null);
-          setFormVisible(true);
-        }}
+      <AppHeader
+        title="Punto de venta"
+        onBackPress={onBackPress}
+        backTestID="pos-back-button"
+        testID="pos-header"
+        rightSlot={
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                isCategoryOverview ? 'Agregar nueva categoría' : 'Agregar nuevo producto'
+              }
+              onPress={handleHeaderAddPress}
+              testID={isCategoryOverview ? 'pos-add-category-button' : 'pos-add-product-button'}
+              style={({ pressed }) => [
+                styles.headerIconBtn,
+                {
+                  backgroundColor: pressed ? tokens.colors.lavenderBorder : tokens.colors.lavender,
+                  borderRadius: tokens.radius.radiusFull,
+                },
+              ]}
+            >
+              <AppIcon name="plus" size={20} color={tokens.colors.primary} />
+            </Pressable>
+
+            {unitsCount > 0 ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Vaciar pedido actual"
+                onPress={handleClearCart}
+                testID="pos-clear-cart-button"
+                style={({ pressed }) => [
+                  styles.headerIconBtn,
+                  {
+                    backgroundColor: pressed ? tokens.colors.errorLight : tokens.colors.surface,
+                    borderRadius: tokens.radius.radiusFull,
+                  },
+                ]}
+              >
+                <AppIcon name="trash-2" size={18} color={tokens.colors.primaryDark} />
+              </Pressable>
+            ) : null}
+          </View>
+        }
       />
+
+      <View
+        style={[
+          styles.segmentedTrack,
+          {
+            backgroundColor: tokens.colors.lavenderSoft,
+            borderRadius: tokens.radius.radiusFull,
+            padding: 4,
+          },
+        ]}
+      >
+        <Pressable
+          accessibilityRole="tab"
+          accessibilityState={{ selected: browseTab === 'products' }}
+          onPress={() => {
+            setBrowseTab('products');
+            setSelectedCategoryId(null);
+          }}
+          testID="pos-tab-products"
+          style={[
+            styles.segmentedTab,
+            {
+              backgroundColor: browseTab === 'products' ? tokens.colors.primary : 'transparent',
+              borderRadius: tokens.radius.radiusFull,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.segmentedTabText,
+              {
+                fontFamily: tokens.typography.families.semiBold,
+                color:
+                  browseTab === 'products'
+                    ? tokens.colors.textOnPrimary
+                    : tokens.colors.textPrimary,
+              },
+            ]}
+          >
+            Productos
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="tab"
+          accessibilityState={{ selected: browseTab === 'categories' }}
+          onPress={() => {
+            setBrowseTab('categories');
+            setSelectedCategoryId(null);
+          }}
+          testID="pos-tab-categories"
+          style={[
+            styles.segmentedTab,
+            {
+              backgroundColor: browseTab === 'categories' ? tokens.colors.primary : 'transparent',
+              borderRadius: tokens.radius.radiusFull,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.segmentedTabText,
+              {
+                fontFamily: tokens.typography.families.semiBold,
+                color:
+                  browseTab === 'categories'
+                    ? tokens.colors.textOnPrimary
+                    : tokens.colors.textPrimary,
+              },
+            ]}
+          >
+            Categorías
+          </Text>
+        </Pressable>
+      </View>
+
+      {browseTab === 'categories' && selectedCategory ? (
+        <View style={styles.selectedCategoryBar}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setSelectedCategoryId(null)}
+            testID="pos-categories-back-button"
+            style={({ pressed }) => [
+              styles.categoryBackChip,
+              {
+                backgroundColor: pressed ? tokens.colors.lavender : tokens.colors.surfaceSecondary,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <AppIcon name="chevron-left" size={16} color={tokens.colors.textPrimary} />
+            <Text
+              style={[
+                styles.categoryBackText,
+                {
+                  fontFamily: tokens.typography.families.semiBold,
+                  color: tokens.colors.textPrimary,
+                },
+              ]}
+            >
+              Categorías
+            </Text>
+          </Pressable>
+
+          <Text
+            numberOfLines={1}
+            testID="pos-selected-category-title"
+            style={[
+              styles.selectedCategoryTitle,
+              {
+                fontFamily: tokens.typography.families.bold,
+                color: tokens.colors.primary,
+              },
+            ]}
+          >
+            {selectedCategory.name}
+          </Text>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setEditingCategory(selectedCategory);
+              setCategoryFormVisible(true);
+            }}
+            testID="pos-selected-category-edit-button"
+            style={[
+              styles.categoryEditPill,
+              {
+                backgroundColor: tokens.colors.lavenderSoft,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <AppIcon name="pencil" size={13} color={tokens.colors.primary} />
+            <Text
+              style={[
+                styles.categoryEditText,
+                {
+                  fontFamily: tokens.typography.families.semiBold,
+                  color: tokens.colors.primary,
+                },
+              ]}
+            >
+              Editar
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      <Text
+        style={[
+          styles.gestureHint,
+          {
+            fontFamily: tokens.typography.families.regular,
+            color: tokens.colors.textSecondary,
+          },
+        ]}
+      >
+        {isCategoryOverview
+          ? '1 tap abre categoría · 2 taps edita o elimina'
+          : '1 tap agrega al pedido · 2 taps edita o elimina'}
+      </Text>
 
       {errorMessage ? (
         <Text
@@ -216,99 +616,208 @@ export function PosScreen({ onChargeCreated }: PosScreenProps) {
         </Text>
       ) : null}
 
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        style={styles.catalogList}
-        columnWrapperStyle={{ gap: tokens.spacing.space3 }}
-        contentContainerStyle={{
-          gap: tokens.spacing.space3,
-          paddingBottom: tokens.spacing.space3,
-        }}
-        renderItem={({ item }) => (
-          <PosProductCard
-            product={item}
-            quantity={quantitiesById.get(item.id) ?? 0}
-            onIncrement={handleIncrementProduct}
-            onDecrement={handleDecrementProduct}
-            onEditPress={(target) => {
-              setEditingProduct(target);
-              setFormVisible(true);
-            }}
-          />
-        )}
-        ListEmptyComponent={
-          <AppEmptyState
-            icon="store"
-            title="Agrega tu primer producto o servicio"
-            description="Arma tu lista con nombre y precio para cobrar con un toque."
-            testID="pos-empty-state"
-            actions={
-              <View style={styles.emptyActions}>
+      {isCategoryOverview ? (
+        <FlatList
+          data={categoryRows}
+          keyExtractor={(row, idx) => row[0]?.id ?? `cat-row-${idx}`}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={styles.catalogList}
+          contentContainerStyle={{
+            gap: tokens.spacing.space2 + 2,
+            paddingBottom: tokens.spacing.space3,
+          }}
+          renderItem={({ item: row }) => (
+            <View style={[styles.gridRow, { gap: tokens.spacing.space2 + 2 }]}>
+              {row.map((category) => (
+                <PosCategoryCard
+                  key={category.id}
+                  category={category}
+                  productsCount={productCountsByCategoryId.get(category.id) ?? 0}
+                  onSingleTap={(target) => setSelectedCategoryId(target.id)}
+                  onDoubleTapEdit={(target) => {
+                    setEditingCategory(target);
+                    setCategoryFormVisible(true);
+                  }}
+                />
+              ))}
+              {row.length < 3
+                ? Array.from({ length: 3 - row.length }).map((_, emptyIndex) => (
+                    <View key={`cat-empty-slot-${emptyIndex}`} style={styles.emptySlot} />
+                  ))
+                : null}
+            </View>
+          )}
+          ListEmptyComponent={
+            <AppEmptyState
+              icon="tag"
+              title="Crea tu primera categoría"
+              description="Organiza tus productos con foto, nombre y descripción."
+              testID="pos-categories-empty-state"
+              actions={
                 <AppButton
                   variant="primary"
                   size="md"
-                  label="+ Agregar producto o servicio"
+                  label="+ Nueva categoría"
                   onPress={() => {
-                    setEditingProduct(null);
-                    setFormVisible(true);
+                    setEditingCategory(null);
+                    setCategoryFormVisible(true);
                   }}
-                  testID="pos-empty-add-button"
+                  testID="pos-categories-empty-add-button"
                 />
-                <View style={styles.templatesSection}>
-                  <Text
-                    style={[
-                      styles.templatesHint,
-                      {
-                        fontFamily: tokens.typography.families.medium,
-                        color: tokens.colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    O carga ejemplos editables:
-                  </Text>
-                  <View style={styles.templatesRow}>
-                    {POS_TEMPLATES.map((tpl) => (
-                      <AppChip
-                        key={tpl.id}
-                        label={tpl.label}
-                        selected={false}
-                        onPress={() => void handleTemplatePress(tpl.id)}
-                        testID={`pos-template-${tpl.id}`}
-                      />
-                    ))}
-                  </View>
+              }
+            />
+          }
+        />
+      ) : (
+        <FlatList
+          data={productRows}
+          keyExtractor={(row, idx) => row[0]?.id ?? `prod-row-${idx}`}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={styles.catalogList}
+          contentContainerStyle={{
+            gap: tokens.spacing.space2 + 2,
+            paddingBottom: tokens.spacing.space3,
+          }}
+          renderItem={({ item: row }) => (
+            <View style={[styles.gridRow, { gap: tokens.spacing.space2 + 2 }]}>
+              {row.map((product) => (
+                <PosProductCard
+                  key={product.id}
+                  product={product}
+                  quantity={quantitiesById.get(product.id) ?? 0}
+                  isActive={activeItem?.product.id === product.id}
+                  onSingleTap={(target) => incrementProduct(target, true)}
+                  onDoubleTapEdit={handleDoubleTapEditProduct}
+                  onLongPressEdit={handleLongPressEditProduct}
+                />
+              ))}
+              {row.length < 3
+                ? Array.from({ length: 3 - row.length }).map((_, emptyIndex) => (
+                    <View key={`empty-slot-${emptyIndex}`} style={styles.emptySlot} />
+                  ))
+                : null}
+            </View>
+          )}
+          ListEmptyComponent={
+            <AppEmptyState
+              icon="store"
+              title={
+                selectedCategory
+                  ? `Sin productos en ${selectedCategory.name}`
+                  : 'Agrega tu primer producto'
+              }
+              description="Sube una foto comprimida en WebP, nombre, descripción y precio."
+              testID="pos-empty-state"
+              actions={
+                <View style={styles.emptyActions}>
+                  <AppButton
+                    variant="primary"
+                    size="md"
+                    label="+ Agregar producto"
+                    onPress={() => {
+                      setEditingProduct(null);
+                      setProductFormVisible(true);
+                    }}
+                    testID="pos-empty-add-button"
+                  />
+                  {products.length === 0 ? (
+                    <View style={styles.templatesSection}>
+                      <Text
+                        style={[
+                          styles.templatesHint,
+                          {
+                            fontFamily: tokens.typography.families.medium,
+                            color: tokens.colors.textSecondary,
+                          },
+                        ]}
+                      >
+                        O carga ejemplos editables:
+                      </Text>
+                      <View style={styles.templatesRow}>
+                        {POS_TEMPLATES.map((tpl) => (
+                          <AppChip
+                            key={tpl.id}
+                            label={tpl.label}
+                            selected={false}
+                            onPress={() => void handleTemplatePress(tpl.id)}
+                            testID={`pos-template-${tpl.id}`}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                  ) : null}
                 </View>
-              </View>
-            }
-          />
-        }
-      />
+              }
+            />
+          }
+        />
+      )}
 
       <PosCheckoutBar
         unitsCount={unitsCount}
         totalCents={totalCents}
+        activeItem={activeItem}
         disabled={totalCents < 100}
         loading={createChargeMutation.isPending}
-        onQrCheckoutPress={() => void handleQrCheckout()}
-        onClearCartPress={handleClearCart}
+        onIncrementActive={(product) => incrementProduct(product, false)}
+        onDecrementActive={decrementProduct}
+        onRemoveActive={removeProductFromCart}
+        onOpenSummaryPress={() => setSummaryVisible(true)}
+        onCobrarPress={() => {
+          if (totalCents >= 100) {
+            setErrorMessage(null);
+            setSummaryVisible(true);
+          }
+        }}
       />
 
-      {formVisible ? (
+      {summaryVisible ? (
+        <PosOrderSummaryModal
+          visible
+          cartItems={cartItems}
+          unitsCount={unitsCount}
+          totalCents={totalCents}
+          isGeneratingQr={createChargeMutation.isPending}
+          errorMessage={errorMessage}
+          onIncrement={(product) => incrementProduct(product, false)}
+          onDecrement={decrementProduct}
+          onRemoveItem={removeProductFromCart}
+          onModifyOrder={() => setSummaryVisible(false)}
+          onConfirmGenerateQr={() => void handleGenerateQrCharge()}
+        />
+      ) : null}
+
+      {productFormVisible ? (
         <PosProductFormModal
           key={editingProduct?.id ?? 'new-product'}
           visible
           editingProduct={editingProduct}
+          categories={categories}
+          defaultCategory={selectedCategory}
           isSaving={isMutatingProduct}
           onClose={() => {
-            setFormVisible(false);
+            setProductFormVisible(false);
             setEditingProduct(null);
           }}
           onSave={handleSaveProduct}
           onDelete={handleDeleteProduct}
+        />
+      ) : null}
+
+      {categoryFormVisible ? (
+        <PosCategoryFormModal
+          key={editingCategory?.id ?? 'new-category'}
+          visible
+          editingCategory={editingCategory}
+          isSaving={isMutatingCategory}
+          onClose={() => {
+            setCategoryFormVisible(false);
+            setEditingCategory(null);
+          }}
+          onSave={handleSaveCategory}
+          onDelete={handleDeleteCategory}
         />
       ) : null}
     </View>
@@ -324,12 +833,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBtn: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentedTrack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  segmentedTab: {
+    flex: 1,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentedTabText: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  selectedCategoryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  categoryBackChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  categoryBackText: {
+    fontSize: 13,
+    lineHeight: 17,
+  },
+  selectedCategoryTitle: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  categoryEditPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  categoryEditText: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  gestureHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+  },
   catalogList: {
+    flex: 1,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  emptySlot: {
     flex: 1,
   },
   errorText: {
     fontSize: 13,
     lineHeight: 18,
+    textAlign: 'center',
   },
   emptyActions: {
     width: '100%',
