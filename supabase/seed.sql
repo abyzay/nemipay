@@ -1,0 +1,4 @@
+-- Seed SQL intencionalmente vacío (sin credenciales ni datos sensibles).
+-- El usuario demo, comercio y catálogo inicial se crean con:
+--   npx tsx scripts/seed-demo.ts
+-- (usando SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY desde variables de entorno locales).

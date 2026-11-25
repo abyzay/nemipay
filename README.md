@@ -1,111 +1,109 @@
 # NemiPay
 
-Aplicación móvil mexicana enfocada en que pequeños y medianos negocios (taquerías, tiendas de abarrotes, restaurantes, comercios pequeños y profesionistas independientes) reciban pagos mediante **CoDi**.
+Cobro **CoDi** gratis y sin configuración para negocios pequeños de todo tipo (tiendas, taquerías, fruterías, peluquerías, puestos de tianguis y servicios). Web-first con **Expo SDK 58** (`expo export -p web`) y backend completo en **Supabase** + **Pey**.
 
-> **Nota de alcance del producto:** NemiPay **no** es una billetera digital, **no** permite enviar dinero entre usuarios y **no** sustituye a las aplicaciones bancarias. Es una herramienta especializada para recibir pagos, administrar cobros y consultar las operaciones del negocio.
-
----
-
-## Estado actual
-
-**Etapa 1 — Infraestructura técnica lista y validada.**
-
-Esta etapa contiene exclusivamente la base técnica del proyecto (arquitectura modular, sistema de diseño, capa HTTP sobre `fetch`, configuración fintech de TanStack Query, envoltorios de seguridad y suite inicial de pruebas). No incluye pantallas funcionales ni integración CoDi todavía.
+> **Nota de alcance:** NemiPay es agnóstico al giro: cobra un monto libre o una lista simple de productos o servicios (nombre y precio), muestra el QR CoDi en vivo y confirma por pantalla verde y voz (`es-MX`).
 
 ---
 
-## Stack tecnológico
+## Arquitectura
 
-- **Core:** Expo `~58.0.26` (SDK 58), React Native `0.88.1`, React `19.3.0`, TypeScript `~6.0.3` (strict mode).
-- **Navegación:** Expo Router `~58.0.32` (`typedRoutes` habilitado).
-- **UI y diseño:** React Native Paper `^5.15.5` (MD3), React Native Safe Area Context `~5.11.1`, React Native SVG `15.16.0`, Lucide React Native `^1.78.0`, `@expo-google-fonts/inter` `^0.4.2`, React Native QRCode SVG `^6.3.54`.
-- **Datos y estado:** TanStack Query `^5.108.4` + Fetch API nativa (sin Axios), Zustand `^5.1.0` (solo estado visual/local de UI).
-- **Formularios y validación:** React Hook Form `^7.92.0`, Zod `^4.6.7`, `@hookform/resolvers` `^7.0.8`.
-- **Seguridad y notificaciones:** Expo SecureStore `~58.0.3`, Expo Local Authentication `~58.0.3`, Expo Crypto `~58.0.8`, Expo Notifications `~58.1.9`, Expo Device `~58.0.5`.
-- **Calidad y pruebas:** ESLint `^9.39.5` (`eslint-config-expo`), Prettier `^3.10.1`, Jest `~30.5.2`, `jest-expo` `~58.0.15`, `@testing-library/react-native` `^14.1.0`.
-
----
-
-## Identidad visual oficial
-
-| Variable       | Color     |
-| -------------- | --------- |
-| Primary        | `#087F5B` |
-| Primary Dark   | `#064E3B` |
-| Secondary      | `#DDF5EA` |
-| Background     | `#F7FAF8` |
-| Surface        | `#FFFFFF` |
-| Text Primary   | `#202B26` |
-| Text Secondary | `#78857E` |
-| Border         | `#E7EDE9` |
-| Success        | `#15966A` |
-| Warning        | `#E8A23A` |
-| Error          | `#D64545` |
-
-Tipografía base: **Inter** (`400`, `500`, `600`, `700`).
+- **Frontend (`app/`, `src/`):** Expo Router (3 tabs: `Cobrar`, `Hoy`, `Cuenta`), React Native Web, React Native Paper, TanStack Query (`mutations.retry: false`), Zustand (solo estado UI y deduplicación de anuncios de voz), Zod y `expo-speech` / `expo-keep-awake`.
+- **Backend (`supabase/`):**
+  - **Postgres + RLS:** `merchants`, `products` (borrado lógico `active = false`), `charges` (solo `SELECT` desde cliente; escritura exclusiva vía `apply_charge_transition` y `service_role`), `webhook_events` (solo `service_role`).
+  - **Funciones SQL:** `apply_charge_transition`, `charges_today()`, `daily_summary()` en zona `America/Mexico_City`.
+  - **Realtime:** suscripción en vivo a actualizaciones de `charges`.
+  - **Edge Functions (Deno):** `create-charge`, `check-charge`, `cancel-charge`, `pey-webhook` (Standard Webhooks), `reconcile-charges`.
+  - **Cron (`pg_cron` + `pg_net` + Vault):** reconciliación periódica de cobros pendientes y expirados.
 
 ---
 
-## Arquitectura del proyecto
+## Variables de entorno
 
-```text
-NemiPay/
-├── app/                   # Rutas y layouts de Expo Router ((auth), (tabs), collect)
-├── src/
-│   ├── components/        # Componentes compartidos (layout/AppProviders, ui/)
-│   ├── config/            # Validación de entorno (Zod) y QueryClient fintech
-│   ├── constants/         # Constantes globales no sensibles
-│   ├── features/          # Módulos por dominio: authentication, business, movements, payments, profile, reports
-│   ├── hooks/             # Hooks transversales (useAppTheme)
-│   ├── services/          # Capa API sobre fetch, seguridad (SecureStore/biometría/crypto) y notificaciones
-│   ├── stores/            # Zustand exclusivo para estado de UI
-│   ├── theme/             # Paleta, tipografía Inter, espaciado, radios, elevaciones y tema Paper MD3
-│   ├── types/             # Tipos base compartidos
-│   └── utils/             # Logger seguro con redacción de campos sensibles
-├── __tests__/             # Pruebas iniciales de infraestructura
-├── assets/                # Imágenes, íconos y fuentes
-├── .env.example           # Plantilla de variables públicas de entorno
-├── app.config.ts          # Configuración dinámica por ambiente (development / production)
-├── app.json               # Configuración base de Expo y config plugins
-└── eas.json               # Perfiles iniciales de EAS Build
+Copia `.env.example` a `.env` y completa las variables públicas del cliente:
+
+```bash
+EXPO_PUBLIC_APP_ENV=development
+EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-publishable-key>
+EXPO_PUBLIC_API_TIMEOUT_MS=15000
+EXPO_PUBLIC_MAX_CHARGE_CENTS=9999900
+```
+
+> **Seguridad:** Nunca coloques `SUPABASE_SERVICE_ROLE_KEY`, `PEY_API_KEY`, `PEY_WEBHOOK_SECRET` ni `CRON_SECRET` en variables `EXPO_PUBLIC_*`.
+
+---
+
+## Desarrollo local y pruebas
+
+```bash
+npm install
+npm run lint
+npm run typecheck
+npm test
+npm run functions:test   # requiere Deno
+npm run build:web        # genera dist/ estático para despliegue web
+```
+
+Para base de datos local (requiere Docker Desktop + Supabase CLI):
+
+```bash
+npm run db:start
+npm run db:reset
+npm run db:lint
+npm run db:test          # ejecuta pruebas pgTAP en supabase/tests/
+npm run db:types         # regenera src/types/database.ts
 ```
 
 ---
 
-## Configuración inicial
+## Despliegue en Supabase Cloud y Web
 
-1. Instala las dependencias:
-
-   ```bash
-   npm install
-   ```
-
-2. Crea tu archivo `.env` a partir de la plantilla:
+1. Enlaza el proyecto y sube migraciones:
 
    ```bash
-   cp .env.example .env
+   npx supabase link --project-ref <project-ref>
+   npx supabase db push
    ```
 
-   > **Advertencia de seguridad:** Nunca coloques secretos privados, llaves privadas de API o contraseñas en variables con prefijo `EXPO_PUBLIC_`.
-
-3. Scripts disponibles:
+2. Configura secretos de Edge Functions (nunca con prefijo `SUPABASE_`):
 
    ```bash
-   npm start            # Inicia Expo Dev Server
-   npm run android      # Inicia en Android
-   npm run ios          # Inicia en iOS
-   npm run typecheck    # Ejecuta tsc --noEmit
-   npm run lint         # Ejecuta expo lint
-   npm run format       # Formatea el código con Prettier
-   npm run format:check # Verifica formato con Prettier
-   npm test             # Ejecuta la suite de Jest
+   npx supabase secrets set \
+     PEY_API_KEY=<api-key> \
+     PEY_BASE_URL=https://api.pey.mx \
+     PEY_WEBHOOK_SECRET=<whsec_...> \
+     ALLOWED_ORIGINS=https://tu-dominio.com \
+     MAX_CHARGE_CENTS=9999900 \
+     CHARGE_TTL_SECONDS=600 \
+     CRON_SECRET=<secreto-aleatorio> \
+     APP_ENV=production
    ```
 
----
+3. Despliega las Edge Functions:
 
-## Principios de seguridad financiera
+   ```bash
+   npx supabase functions deploy
+   ```
 
-- **Sin Axios:** Toda comunicación HTTP utiliza la Fetch API nativa en `src/services/api/client.ts` con soporte de `AbortController`, timeouts y validación opcional con Zod.
-- **Sin duplicidad de cobros:** `mutations.retry` está fijado en `false` en TanStack Query y se incluye soporte de `Idempotency-Key` generado mediante `expo-crypto`.
-- **Confirmación autoritativa en backend:** La aplicación móvil nunca determina por sí sola que un pago fue recibido; toda confirmación proviene del backend tras validar la operación financiera.
-- **Almacenamiento seguro:** Tokens y preferencias sensibles utilizan `expo-secure-store`; nunca se almacenan contraseñas locales ni se registran tokens en logs.
+4. Configura los secretos del Cron en Vault (en el SQL Editor de Supabase):
+
+   ```sql
+   select vault.create_secret('https://<project-ref>.supabase.co/functions/v1/reconcile-charges', 'reconcile_charges_url');
+   select vault.create_secret('<CRON_SECRET>', 'cron_secret');
+   ```
+
+5. Desactiva el registro público en **Auth → Providers → Email** (o usa `config.toml`) y crea la cuenta demo:
+
+   ```bash
+   npx tsx scripts/seed-demo.ts
+   ```
+
+6. Registra en el panel de Pey la URL pública del webhook:
+
+   ```text
+   https://<project-ref>.supabase.co/functions/v1/pey-webhook
+   ```
+
+7. Compila y publica el sitio estático web (`npm run build:web` → carpeta `dist/`). Agrega su URL a `ALLOWED_ORIGINS` y a **Site URL** en Supabase Auth.
+8. Antes de entregar, revisa **Security Advisor** y **Performance Advisor** en el dashboard de Supabase.

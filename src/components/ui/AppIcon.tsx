@@ -31,10 +31,12 @@ import {
   Lock,
   Mail,
   Minus,
+  Pencil,
   Phone,
   Plus,
   QrCode,
   Receipt,
+  RefreshCw,
   Search,
   Send,
   Settings,
@@ -45,6 +47,7 @@ import {
   Trash2,
   UserRound,
   Utensils,
+  Volume2,
   Wallet,
   X,
   type LucideIcon,
@@ -99,8 +102,11 @@ const LUCIDE_ICON_MAP = {
   CupSoda,
   Building2,
   Banknote,
+  Pencil,
   Phone,
   Mail,
+  RefreshCw,
+  Volume2,
 
   // Aliases kebab-case para uso uniforme y compatibilidad con datos existentes
   home: Home,
@@ -185,6 +191,9 @@ const LUCIDE_ICON_MAP = {
   'shopping-basket': ShoppingBasket,
   'pricetag-outline': Tag,
   tag: Tag,
+  pencil: Pencil,
+  'refresh-cw': RefreshCw,
+  'volume-2': Volume2,
 } satisfies Record<string, LucideIcon>;
 
 export type AppIconName = keyof typeof LUCIDE_ICON_MAP;

@@ -1,14 +1,10 @@
 export { PosCheckoutBar } from './PosCheckoutBar';
 export type { PosCheckoutBarProps } from './PosCheckoutBar';
-export { PosHeader } from './PosHeader';
-export type { PosHeaderProps } from './PosHeader';
 export { PosProductCard } from './PosProductCard';
 export type { PosProductCardProps } from './PosProductCard';
 export { PosProductFormModal } from './PosProductFormModal';
 export type { PosProductFormModalProps } from './PosProductFormModal';
 export { PosScreen } from './PosScreen';
 export type { PosScreenProps } from './PosScreen';
-export { PosSearchAndFilters } from './PosSearchAndFilters';
-export type { PosSearchAndFiltersProps } from './PosSearchAndFilters';
 export { PosTotalBanner } from './PosTotalBanner';
 export type { PosTotalBannerProps } from './PosTotalBanner';

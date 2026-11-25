@@ -1,97 +1,71 @@
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { AppBottomSheet, AppButton, AppChip, AppIcon, AppInput } from '@/components/ui';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppBottomSheet, AppButton, AppInput } from '@/components/ui';
+import { env } from '@/config/env';
+import { parseAmountInputToCents } from '@/features/payments/utils/parseAmountCents';
 import { useAppTheme } from '@/hooks';
-import { POS_CATEGORIES, type PosCategory, type PosProduct, type PosProductDraft } from '../types';
+import type { PosProduct, PosProductDraft } from '../types';
 
 export interface PosProductFormModalProps {
   visible: boolean;
   editingProduct: PosProduct | null;
-  initialName?: string;
+  isSaving?: boolean;
   onClose: () => void;
-  onSave: (draft: PosProductDraft, productId?: string) => void;
-  onDelete?: (productId: string) => void;
+  onSave: (draft: PosProductDraft, productId?: string) => void | Promise<void>;
+  onDelete?: (productId: string) => void | Promise<void>;
+}
+
+function formatPriceForInput(priceCents: number): string {
+  const whole = Math.floor(priceCents / 100);
+  const cents = priceCents % 100;
+  return cents === 0 ? String(whole) : `${whole}.${String(cents).padStart(2, '0')}`;
 }
 
 export function PosProductFormModal({
   visible,
   editingProduct,
-  initialName = '',
+  isSaving = false,
   onClose,
   onSave,
   onDelete,
 }: PosProductFormModalProps) {
   const { tokens } = useAppTheme();
-  const [name, setName] = useState(() => editingProduct?.name ?? initialName);
+  const [name, setName] = useState(() => editingProduct?.name ?? '');
   const [priceText, setPriceText] = useState(() =>
-    editingProduct ? (editingProduct.priceCents / 100).toFixed(2).replace(/\.00$/, '') : ''
+    editingProduct ? formatPriceForInput(editingProduct.priceCents) : ''
   );
-  const [category, setCategory] = useState<PosCategory>(
-    () => editingProduct?.category ?? 'Bebidas'
-  );
-  const [imageUri, setImageUri] = useState<string | undefined>(() => editingProduct?.imageUri);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleTakePhoto = async () => {
-    setErrorMessage(null);
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      setErrorMessage('Necesitamos permiso de cámara para tomar la foto del producto.');
+  const handlePriceChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
       return;
     }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled && result.assets[0]?.uri) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
-
-  const handlePickFromLibrary = async () => {
-    setErrorMessage(null);
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setErrorMessage('Necesitamos permiso de galería para elegir una imagen.');
+    if (parts[1] && parts[1].length > 2) {
       return;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled && result.assets[0]?.uri) {
-      setImageUri(result.assets[0].uri);
-    }
+    setPriceText(cleaned);
   };
 
   const handleSavePress = () => {
     const trimmedName = name.trim();
-    if (trimmedName.length < 2) {
-      setErrorMessage('Ingresa un nombre de al menos 2 caracteres.');
+    if (trimmedName.length < 1 || trimmedName.length > 40) {
+      setErrorMessage('Ingresa un nombre entre 1 y 40 caracteres.');
       return;
     }
 
-    const numericPrice = Number.parseFloat(priceText.replace(/[^0-9.]/g, ''));
-    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
-      setErrorMessage('Ingresa un precio válido mayor a $0.00.');
+    const priceCents = parseAmountInputToCents(priceText, env.maxChargeCents);
+    if (priceCents < 100) {
+      setErrorMessage('El precio mínimo es de $1.00 MXN.');
       return;
     }
 
-    onSave(
+    setErrorMessage(null);
+    void onSave(
       {
         name: trimmedName,
-        priceCents: Math.round(numericPrice * 100),
-        category,
-        imageUri,
+        priceCents,
       },
       editingProduct?.id
     );
@@ -101,132 +75,19 @@ export function PosProductFormModal({
     <AppBottomSheet
       visible={visible}
       onClose={onClose}
-      title={editingProduct ? 'Editar producto' : 'Nuevo producto'}
-      closeAccessibilityLabel="Cerrar formulario de producto"
+      title={editingProduct ? 'Editar producto o servicio' : 'Nuevo producto o servicio'}
+      closeAccessibilityLabel="Cerrar formulario de producto o servicio"
       closeButtonTestID="pos-form-close-button"
       testID="pos-product-form-modal"
     >
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={[styles.photoRow, { gap: tokens.spacing.space3 }]}>
-          <View
-            style={[
-              styles.photoPreview,
-              {
-                backgroundColor: tokens.colors.surface,
-                borderColor: tokens.colors.border,
-                borderRadius: tokens.radius.radiusCard,
-              },
-            ]}
-          >
-            {imageUri ? (
-              <Image
-                source={{ uri: imageUri }}
-                style={[styles.previewImage, { borderRadius: tokens.radius.radiusCard }]}
-                testID="pos-form-photo-preview"
-              />
-            ) : (
-              <AppIcon name="camera-outline" size={24} color={tokens.colors.textSecondary} />
-            )}
-          </View>
-
-          <View style={[styles.photoButtons, { gap: tokens.spacing.space2 }]}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void handleTakePhoto()}
-              testID="pos-form-camera-button"
-              style={[
-                styles.photoBtn,
-                {
-                  backgroundColor: tokens.colors.lavender,
-                  borderRadius: tokens.radius.radiusMD,
-                  paddingHorizontal: tokens.spacing.space3,
-                  gap: tokens.spacing.space2,
-                },
-              ]}
-            >
-              <AppIcon name="camera-outline" size={18} color={tokens.colors.primary} />
-              <Text
-                style={[
-                  styles.photoBtnText,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.primary,
-                  },
-                ]}
-              >
-                Tomar foto
-              </Text>
-            </Pressable>
-
-            <View style={[styles.secondaryPhotoRow, { gap: tokens.spacing.space2 }]}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void handlePickFromLibrary()}
-                testID="pos-form-gallery-button"
-                style={[
-                  styles.smallPhotoBtn,
-                  {
-                    backgroundColor: tokens.colors.surface,
-                    borderColor: tokens.colors.border,
-                    borderRadius: tokens.radius.radiusMD,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.smallPhotoText,
-                    {
-                      fontFamily: tokens.typography.families.medium,
-                      color: tokens.colors.textPrimary,
-                    },
-                  ]}
-                >
-                  Galería
-                </Text>
-              </Pressable>
-
-              {imageUri ? (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => setImageUri(undefined)}
-                  testID="pos-form-remove-photo-button"
-                  style={[
-                    styles.smallPhotoBtn,
-                    {
-                      backgroundColor: tokens.colors.errorLight,
-                      borderColor: tokens.colors.errorLight,
-                      borderRadius: tokens.radius.radiusMD,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.smallPhotoText,
-                      {
-                        fontFamily: tokens.typography.families.medium,
-                        color: tokens.colors.error,
-                      },
-                    ]}
-                  >
-                    Quitar
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.formFields,
-            { gap: tokens.spacing.space4, marginTop: tokens.spacing.space4 },
-          ]}
-        >
+        <View style={[styles.formFields, { gap: tokens.spacing.space4 }]}>
           <AppInput
-            label="Nombre del producto"
+            label="Nombre del producto o servicio"
             value={name}
             onChangeText={setName}
-            placeholder="Ej. Horchata 500ml"
+            maxLength={40}
+            placeholder="Ej. Producto o servicio"
             testID="pos-form-name-input"
           />
 
@@ -234,36 +95,11 @@ export function PosProductFormModal({
             label="Precio (MXN)"
             prefix="$"
             value={priceText}
-            onChangeText={setPriceText}
+            onChangeText={handlePriceChange}
             keyboardType="decimal-pad"
             placeholder="Ej. 25.00"
             testID="pos-form-price-input"
           />
-
-          <View style={{ gap: tokens.spacing.space2 }}>
-            <Text
-              style={[
-                styles.label,
-                {
-                  fontFamily: tokens.typography.families.semiBold,
-                  color: tokens.colors.gray[700],
-                },
-              ]}
-            >
-              Categoría
-            </Text>
-            <View style={[styles.categoryWrap, { gap: tokens.spacing.space2 }]}>
-              {POS_CATEGORIES.map((option) => (
-                <AppChip
-                  key={option}
-                  label={option}
-                  selected={category === option}
-                  onPress={() => setCategory(option)}
-                  testID={`pos-form-category-${option}`}
-                />
-              ))}
-            </View>
-          </View>
         </View>
 
         {errorMessage ? (
@@ -285,7 +121,9 @@ export function PosProductFormModal({
         <View style={{ gap: tokens.spacing.space3, marginTop: tokens.spacing.space5 }}>
           <AppButton
             variant="primary"
-            label={editingProduct ? 'Guardar cambios' : 'Agregar al catálogo'}
+            label={isSaving ? 'Guardando…' : editingProduct ? 'Guardar cambios' : 'Guardar'}
+            loading={isSaving}
+            disabled={isSaving}
             onPress={handleSavePress}
             testID="pos-form-save-button"
           />
@@ -294,8 +132,9 @@ export function PosProductFormModal({
             <AppButton
               variant="destructive"
               leftIcon="trash-2"
-              label="Eliminar producto"
-              onPress={() => onDelete(editingProduct.id)}
+              label="Eliminar"
+              disabled={isSaving}
+              onPress={() => void onDelete(editingProduct.id)}
               testID="pos-form-delete-button"
             />
           ) : null}
@@ -306,59 +145,8 @@ export function PosProductFormModal({
 }
 
 const styles = StyleSheet.create({
-  photoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  photoPreview: {
-    width: 72,
-    height: 72,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-  },
-  photoButtons: {
-    flex: 1,
-  },
-  photoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 40,
-  },
-  photoBtnText: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  secondaryPhotoRow: {
-    flexDirection: 'row',
-  },
-  smallPhotoBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    minHeight: 34,
-  },
-  smallPhotoText: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
   formFields: {
     width: '100%',
-  },
-  label: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  categoryWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
   },
   errorText: {
     fontSize: 12,

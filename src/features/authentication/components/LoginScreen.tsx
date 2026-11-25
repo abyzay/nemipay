@@ -13,7 +13,10 @@ import { LoginIllustration } from './LoginIllustration';
 
 export interface LoginScreenProps {
   onBackPress: () => void;
-  onSubmit: (values: LoginFormValues) => void;
+  onSubmit: (values: LoginFormValues) => void | Promise<void>;
+  isSubmitting?: boolean;
+  defaultIdentifier?: string;
+  defaultPassword?: string;
   onForgotPasswordPress?: () => void;
   onGooglePress?: () => void;
   onRegisterPress?: () => void;
@@ -22,6 +25,9 @@ export interface LoginScreenProps {
 export function LoginScreen({
   onBackPress,
   onSubmit,
+  isSubmitting = false,
+  defaultIdentifier = '',
+  defaultPassword = '',
   onForgotPasswordPress,
   onGooglePress,
   onRegisterPress,
@@ -36,8 +42,8 @@ export function LoginScreen({
     resolver: zodResolver(loginSchema),
     mode: 'onTouched',
     defaultValues: {
-      identifier: '',
-      password: '',
+      identifier: defaultIdentifier,
+      password: defaultPassword,
     },
   });
 
@@ -106,15 +112,15 @@ export function LoginScreen({
                   <AppInput
                     variant="soft"
                     leftIcon="mail-outline"
-                    placeholder="Correo o celular"
-                    accessibilityLabel="Correo o celular"
+                    placeholder="Correo electrónico"
+                    accessibilityLabel="Correo electrónico"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    textContentType="username"
+                    textContentType="emailAddress"
                     returnKeyType="next"
                     error={errors.identifier?.message}
                     testID="login-identifier-input"
@@ -151,7 +157,9 @@ export function LoginScreen({
               <View style={{ marginTop: tokens.spacing.space1 }}>
                 <AppButton
                   variant="primary"
-                  label="Entrar"
+                  label={isSubmitting ? 'Entrando…' : 'Entrar'}
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
                   onPress={handleSubmit(onSubmit)}
                   testID="login-submit-button"
                   style={{ borderRadius: tokens.radius.radiusFull }}

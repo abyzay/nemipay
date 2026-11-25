@@ -1,22 +1,49 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { ScreenContainer } from '@/components/layout';
-import { AppAvatar, AppBadge, AppButton, AppCard, AppDivider, AppIcon } from '@/components/ui';
-import { getMockDashboardData } from '@/features/business/services';
+import { AppAvatar, AppBadge, AppButton, AppCard } from '@/components/ui';
+import { fetchMerchantProfile } from '@/features/authentication/services';
+import { paymentKeys } from '@/features/payments/queries/keys';
+import { startShiftAnnouncement, stopShiftKeepAwake } from '@/features/payments/services/announce';
 import { useAppTheme } from '@/hooks';
 import { useUiStore } from '@/stores';
 
 export interface ProfileScreenProps {
-  onLogoutPress: () => void;
+  onLogoutPress: () => void | Promise<void>;
+}
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'NP';
+  if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase();
+  return `${words[0]![0]}${words[1]![0]}`.toUpperCase();
 }
 
 export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
   const { tokens } = useAppTheme();
   const authenticatedUser = useUiStore((state) => state.authenticatedUser);
-  const dashboardData = useMemo(() => getMockDashboardData(), []);
+  const shiftActive = useUiStore((state) => state.shiftActive);
+  const setShiftActive = useUiStore((state) => state.setShiftActive);
 
-  const displayName = authenticatedUser?.displayName ?? dashboardData.merchant.ownerName;
-  const username = authenticatedUser?.username ?? 'abyzay';
+  const merchantQuery = useQuery({
+    queryKey: paymentKeys.merchant(authenticatedUser?.id ?? ''),
+    queryFn: () => fetchMerchantProfile(authenticatedUser!.id),
+    enabled: Boolean(authenticatedUser?.id),
+  });
+
+  const merchantName = merchantQuery.data?.name ?? authenticatedUser?.displayName ?? 'Mi Negocio';
+  const email = authenticatedUser?.email ?? '';
+
+  const handleToggleShift = async () => {
+    if (shiftActive) {
+      stopShiftKeepAwake();
+      setShiftActive(false);
+    } else {
+      await startShiftAnnouncement();
+      setShiftActive(true);
+    }
+  };
 
   return (
     <ScreenContainer edges={['top']} scrollable>
@@ -30,7 +57,7 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
             },
           ]}
         >
-          Perfil del comercio
+          Cuenta
         </Text>
       </View>
 
@@ -42,8 +69,9 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
           { marginTop: tokens.spacing.space4, gap: tokens.spacing.space2 },
         ]}
       >
-        <AppAvatar initials={dashboardData.merchant.avatarInitials} size={64} />
+        <AppAvatar initials={getInitials(merchantName)} size={64} />
         <Text
+          testID="profile-merchant-name"
           style={[
             styles.ownerName,
             {
@@ -53,113 +81,49 @@ export function ProfileScreen({ onLogoutPress }: ProfileScreenProps) {
             },
           ]}
         >
-          {displayName}
+          {merchantName}
         </Text>
-        <Text
-          style={[
-            styles.businessName,
-            {
-              fontFamily: tokens.typography.families.regular,
-              color: tokens.colors.textSecondary,
-            },
-          ]}
-        >
-          {`${dashboardData.merchant.businessName} · @${username}`}
-        </Text>
+        {email ? (
+          <Text
+            style={[
+              styles.businessName,
+              {
+                fontFamily: tokens.typography.families.regular,
+                color: tokens.colors.textSecondary,
+              },
+            ]}
+          >
+            {email}
+          </Text>
+        ) : null}
         <View style={{ marginTop: tokens.spacing.space1 }}>
-          <AppBadge label="Comercio verificado CoDi" variant="lavender" icon="shield-check" />
+          <AppBadge
+            label={shiftActive ? 'Turno activo (pantalla y voz)' : 'Turno en pausa'}
+            variant={shiftActive ? 'success' : 'neutral'}
+            icon={shiftActive ? 'volume-2' : 'clock'}
+          />
         </View>
       </AppCard>
 
-      <AppCard
-        variant="standard"
-        padding="md"
-        style={{ marginTop: tokens.spacing.space4, gap: tokens.spacing.space3 }}
+      <View
+        style={{
+          marginTop: tokens.spacing.space5,
+          gap: tokens.spacing.space3,
+          paddingBottom: tokens.spacing.space6,
+        }}
       >
-        <View style={[styles.infoRow, { gap: tokens.spacing.space3 }]}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: tokens.colors.lavenderSoft,
-                borderRadius: tokens.radius.radiusMD,
-              },
-            ]}
-          >
-            <AppIcon name="qr-code" size={20} color={tokens.colors.primary} />
-          </View>
-          <View style={styles.infoText}>
-            <Text
-              style={[
-                styles.infoLabel,
-                {
-                  fontFamily: tokens.typography.families.medium,
-                  color: tokens.colors.textSecondary,
-                },
-              ]}
-            >
-              Alias CoDi
-            </Text>
-            <Text
-              style={[
-                styles.infoValue,
-                {
-                  fontFamily: tokens.typography.families.semiBold,
-                  color: tokens.colors.textPrimary,
-                },
-              ]}
-            >
-              {dashboardData.merchant.codiAlias}
-            </Text>
-          </View>
-        </View>
+        <AppButton
+          variant={shiftActive ? 'outlined' : 'primary'}
+          leftIcon="volume-2"
+          label={shiftActive ? 'Terminar turno' : 'Iniciar turno'}
+          onPress={() => void handleToggleShift()}
+          testID="profile-shift-toggle-button"
+        />
 
-        <AppDivider />
-
-        <View style={[styles.infoRow, { gap: tokens.spacing.space3 }]}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: tokens.colors.lavenderSoft,
-                borderRadius: tokens.radius.radiusMD,
-              },
-            ]}
-          >
-            <AppIcon name="business-outline" size={20} color={tokens.colors.primary} />
-          </View>
-          <View style={styles.infoText}>
-            <Text
-              style={[
-                styles.infoLabel,
-                {
-                  fontFamily: tokens.typography.families.medium,
-                  color: tokens.colors.textSecondary,
-                },
-              ]}
-            >
-              Cuenta receptora
-            </Text>
-            <Text
-              style={[
-                styles.infoValue,
-                {
-                  fontFamily: tokens.typography.families.semiBold,
-                  color: tokens.colors.textPrimary,
-                },
-              ]}
-            >
-              {`${dashboardData.merchant.bankName} ${dashboardData.merchant.clabeMasked}`}
-            </Text>
-          </View>
-        </View>
-      </AppCard>
-
-      <View style={{ marginTop: tokens.spacing.space6, paddingBottom: tokens.spacing.space6 }}>
         <AppButton
           variant="outlined"
           label="Cerrar sesión"
-          onPress={onLogoutPress}
+          onPress={() => void onLogoutPress()}
           testID="profile-logout-button"
         />
       </View>
@@ -182,31 +146,11 @@ const styles = StyleSheet.create({
   ownerName: {
     fontSize: 20,
     lineHeight: 28,
+    textAlign: 'center',
   },
   businessName: {
     fontSize: 14,
     lineHeight: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoText: {
-    flex: 1,
-    gap: 2,
-  },
-  infoLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  infoValue: {
-    fontSize: 15,
-    lineHeight: 20,
+    textAlign: 'center',
   },
 });

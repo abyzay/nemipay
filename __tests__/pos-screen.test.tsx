@@ -1,9 +1,31 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { AppProviders } from '@/components/layout';
 import { createQueryClient } from '@/config/queryClient';
 import { PosScreen } from '@/features/pos/components';
+import type { PosProduct } from '@/features/pos/types';
+import { useUiStore } from '@/stores';
+
+const mockCreateCharge = jest.fn();
+const mockFetchProducts = jest.fn();
+const mockCreateProduct = jest.fn();
+const mockUpdateProduct = jest.fn();
+const mockArchiveProduct = jest.fn();
+
+jest.mock('@/features/payments/services/chargesService', () => ({
+  createCharge: (...args: unknown[]) => mockCreateCharge(...args),
+}));
+
+jest.mock('@/features/pos/services/productsService', () => {
+  const actual = jest.requireActual('@/features/pos/services/productsService');
+  return {
+    ...actual,
+    fetchActiveProducts: () => mockFetchProducts(),
+    createProduct: (...args: unknown[]) => mockCreateProduct(...args),
+    updateProduct: (...args: unknown[]) => mockUpdateProduct(...args),
+    archiveProduct: (...args: unknown[]) => mockArchiveProduct(...args),
+  };
+});
 
 jest.mock('@react-native-vector-icons/ionicons', () => {
   const { createElement } = jest.requireActual<typeof import('react')>('react');
@@ -14,22 +36,6 @@ jest.mock('@react-native-vector-icons/ionicons', () => {
       createElement(Text, { testID: testID ?? `ionicon-${name}` }, name),
   };
 });
-
-jest.mock('react-native-confetti-cannon', () => {
-  const { createElement } = jest.requireActual<typeof import('react')>('react');
-  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
-
-  return function MockConfettiCannon({ testID }: { testID?: string }) {
-    return createElement(View, { testID: testID ?? 'mock-confetti' });
-  };
-});
-
-jest.mock('expo-image-picker', () => ({
-  requestCameraPermissionsAsync: jest.fn(),
-  launchCameraAsync: jest.fn(),
-  requestMediaLibraryPermissionsAsync: jest.fn(),
-  launchImageLibraryAsync: jest.fn(),
-}));
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(
@@ -45,108 +51,121 @@ function renderWithProviders(ui: React.ReactElement) {
   );
 }
 
-describe('PosScreen (Punto de venta)', () => {
+describe('PosScreen (POS mínimo agnóstico)', () => {
+  let productsState: PosProduct[];
+
   beforeEach(() => {
     jest.clearAllMocks();
+    useUiStore.setState({
+      authenticatedUser: {
+        id: 'merchant-1',
+        email: 'demo@nemipay.mx',
+        displayName: 'Negocio Demo',
+      },
+      sessionStatus: 'authenticated',
+    });
+
+    productsState = [
+      { id: 'prod-1', name: 'Agua 600ml', priceCents: 1500 },
+      { id: 'prod-2', name: 'Servicio básico', priceCents: 4500 },
+    ];
+
+    mockFetchProducts.mockImplementation(async () => [...productsState]);
+    mockCreateProduct.mockImplementation(async (_merchantId, draft) => {
+      const created: PosProduct = { id: 'prod-3', name: draft.name, priceCents: draft.priceCents };
+      productsState = [created, ...productsState];
+      return created;
+    });
+    mockUpdateProduct.mockImplementation(async (id, draft) => {
+      const updated: PosProduct = { id, name: draft.name, priceCents: draft.priceCents };
+      productsState = productsState.map((p) => (p.id === id ? updated : p));
+      return updated;
+    });
+    mockArchiveProduct.mockImplementation(async (id) => {
+      productsState = productsState.filter((p) => p.id !== id);
+    });
+    mockCreateCharge.mockResolvedValue({
+      id: 'charge-pos-1',
+      status: 'AWAITING_PAYMENT',
+      amountCents: 6000,
+      currency: 'MXN',
+      concept: '1× Agua 600ml, 1× Servicio básico',
+      items: null,
+      qrPayload: 'CODI://QR',
+      expiresAt: new Date(Date.now() + 600_000).toISOString(),
+      paidAt: null,
+      paidAfterExpiry: false,
+      failureReason: null,
+      createdAt: new Date().toISOString(),
+    });
   });
 
-  it('permite buscar rápido, agregar/quitar productos y cobrar en efectivo lanzando PaymentReceivedModal', async () => {
-    const onClosePress = jest.fn();
-    const onQrCheckoutPress = jest.fn();
+  it('permite sumar, restar, calcular total y cobrar enviando solo items al servidor', async () => {
+    const onChargeCreated = jest.fn();
+    await renderWithProviders(<PosScreen onChargeCreated={onChargeCreated} />);
 
-    await renderWithProviders(
-      <PosScreen onClosePress={onClosePress} onQrCheckoutPress={onQrCheckoutPress} />
+    await waitFor(() => {
+      expect(screen.getByText('Agua 600ml')).toBeOnTheScreen();
+    });
+
+    expect(screen.getByTestId('pos-checkout-summary')).toHaveTextContent(
+      '0 artículos · Total $0.00'
     );
 
-    expect(screen.getByText('Punto de venta')).toBeOnTheScreen();
-    expect(screen.getByTestId('pos-storefront-illustration')).toBeOnTheScreen();
-    expect(screen.getByTestId('pos-total-amount')).toHaveTextContent('$0.00');
-    expect(screen.getByText('Agua 600ml')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('pos-product-card-prod-1'));
+    await fireEvent.press(screen.getByTestId('pos-product-plus-prod-1'));
+    await fireEvent.press(screen.getByTestId('pos-product-card-prod-2'));
 
-    // Búsqueda rápida
-    await fireEvent.changeText(screen.getByTestId('pos-search-input'), 'Refresco');
-    expect(screen.getByText('Refresco 600ml')).toBeOnTheScreen();
-    expect(screen.queryByText('Pan dulce')).toBeNull();
+    expect(screen.getByTestId('pos-checkout-summary')).toHaveTextContent(
+      '3 artículos · Total $75.00'
+    );
 
-    // Agregar 1 refresco ($22)
-    await fireEvent.press(screen.getByTestId('pos-product-card-prod_refresco_600'));
-    expect(screen.getByTestId('pos-total-amount')).toHaveTextContent('$22.00');
+    await fireEvent.press(screen.getByTestId('pos-product-minus-prod-1'));
+    expect(screen.getByTestId('pos-checkout-summary')).toHaveTextContent(
+      '2 artículos · Total $60.00'
+    );
 
-    // Limpiar búsqueda y agregar Agua ($15) x2 y quitar 1
-    await fireEvent.press(screen.getByTestId('pos-search-clear-button'));
-    await fireEvent.press(screen.getByTestId('pos-product-card-prod_agua_600'));
-    await fireEvent.press(screen.getByTestId('pos-product-plus-prod_agua_600'));
-    expect(screen.getByTestId('pos-total-amount')).toHaveTextContent('$52.00');
-    expect(screen.getByTestId('pos-units-count')).toHaveTextContent('3 art.');
-
-    await fireEvent.press(screen.getByTestId('pos-product-minus-prod_agua_600'));
-    expect(screen.getByTestId('pos-total-amount')).toHaveTextContent('$37.00');
-    expect(screen.getByTestId('pos-units-count')).toHaveTextContent('2 art.');
-
-    // Cobrar con QR pasa monto total y resumen
     await fireEvent.press(screen.getByTestId('pos-checkout-qr-button'));
-    expect(onQrCheckoutPress).toHaveBeenCalledWith(3700, 'Venta POS (2 artículos)');
 
-    // Cobrar en efectivo abre PaymentReceivedModal con confeti y limpia al aceptar
-    await fireEvent.press(screen.getByTestId('pos-checkout-cash-button'));
-    expect(screen.getByTestId('payment-received-modal')).toBeOnTheScreen();
-    expect(screen.getByTestId('payment-received-amount')).toHaveTextContent('$37.00');
-    expect(screen.getByTestId('payment-received-confetti')).toBeOnTheScreen();
-
-    await fireEvent.press(screen.getByTestId('payment-received-accept-button'));
-    expect(screen.queryByTestId('payment-received-modal')).toBeNull();
-    expect(screen.getByTestId('pos-total-amount')).toHaveTextContent('$0.00');
+    await waitFor(() => {
+      expect(mockCreateCharge).toHaveBeenCalledWith(
+        {
+          items: [
+            { productId: 'prod-1', quantity: 1 },
+            { productId: 'prod-2', quantity: 1 },
+          ],
+        },
+        expect.any(String)
+      );
+      expect(onChargeCreated).toHaveBeenCalledWith('charge-pos-1');
+    });
   });
 
-  it('permite agregar un producto con foto de cámara, editarlo y eliminarlo', async () => {
-    const mockedPicker = ImagePicker as jest.Mocked<typeof ImagePicker>;
-    mockedPicker.requestCameraPermissionsAsync.mockResolvedValue({
-      granted: true,
-      canAskAgain: true,
-      expires: 'never',
-      status: 'granted' as ImagePicker.PermissionStatus,
-    });
-    mockedPicker.launchCameraAsync.mockResolvedValue({
-      canceled: false,
-      assets: [
-        {
-          uri: 'file:///mock-product-photo.jpg',
-          width: 400,
-          height: 400,
-          assetId: null,
-          base64: null,
-          duration: null,
-          exif: null,
-          fileName: 'photo.jpg',
-          fileSize: 12345,
-          mimeType: 'image/jpeg',
-          type: 'image',
-        },
-      ],
+  it('permite agregar y editar un producto o servicio', async () => {
+    await renderWithProviders(<PosScreen onChargeCreated={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pos-add-product-button')).toBeOnTheScreen();
     });
 
-    await renderWithProviders(<PosScreen onClosePress={jest.fn()} onQrCheckoutPress={jest.fn()} />);
-
-    // Abrir modal para agregar producto
     await fireEvent.press(screen.getByTestId('pos-add-product-button'));
     expect(screen.getByTestId('pos-product-form-modal')).toBeOnTheScreen();
 
-    await fireEvent.press(screen.getByTestId('pos-form-camera-button'));
-    await waitFor(() => {
-      expect(screen.getByTestId('pos-form-photo-preview')).toBeOnTheScreen();
-    });
-
-    await fireEvent.changeText(screen.getByTestId('pos-form-name-input'), 'Horchata 500ml');
-    await fireEvent.changeText(screen.getByTestId('pos-form-price-input'), '30');
+    await fireEvent.changeText(screen.getByTestId('pos-form-name-input'), 'Jugo verde');
+    await fireEvent.changeText(screen.getByTestId('pos-form-price-input'), '35');
     await fireEvent.press(screen.getByTestId('pos-form-save-button'));
 
-    expect(screen.queryByTestId('pos-product-form-modal')).toBeNull();
-    expect(screen.getByText('Horchata 500ml')).toBeOnTheScreen();
+    await waitFor(() => {
+      expect(screen.getByText('Jugo verde')).toBeOnTheScreen();
+    });
 
-    // Eliminar un producto existente del catálogo
-    await fireEvent.press(screen.getByTestId('pos-product-edit-prod_hielo'));
-    expect(screen.getByTestId('pos-form-delete-button')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByTestId('pos-form-delete-button'));
-    expect(screen.queryByText('Bolsa de hielo')).toBeNull();
+    await fireEvent.press(screen.getByTestId('pos-product-edit-prod-1'));
+    await fireEvent.changeText(screen.getByTestId('pos-form-name-input'), 'Agua 1L');
+    await fireEvent.changeText(screen.getByTestId('pos-form-price-input'), '20');
+    await fireEvent.press(screen.getByTestId('pos-form-save-button'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Agua 1L')).toBeOnTheScreen();
+    });
   });
 });

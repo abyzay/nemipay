@@ -1,1 +1,1 @@
-export { getMockMovements, getRecentMockMovements } from './mockMovementsService';
+export { fetchChargesToday } from './movementsService';

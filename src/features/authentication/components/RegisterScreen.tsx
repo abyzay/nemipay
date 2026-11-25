@@ -17,6 +17,7 @@ export interface RegisterScreenProps {
   onGooglePress?: () => void;
   onTermsPress?: () => void;
   onPrivacyPress?: () => void;
+  registrationDisabled?: boolean;
 }
 
 export function RegisterScreen({
@@ -25,6 +26,7 @@ export function RegisterScreen({
   onGooglePress,
   onTermsPress,
   onPrivacyPress,
+  registrationDisabled = false,
 }: RegisterScreenProps) {
   const { tokens } = useAppTheme();
 
@@ -257,7 +259,8 @@ export function RegisterScreen({
               <AppButton
                 variant="primary"
                 label="Crear cuenta"
-                onPress={handleSubmit(onSubmit)}
+                disabled={registrationDisabled}
+                onPress={registrationDisabled ? () => {} : handleSubmit(onSubmit)}
                 testID="register-submit-button"
                 style={{ borderRadius: tokens.radius.radiusFull }}
               />
@@ -265,6 +268,7 @@ export function RegisterScreen({
               <AuthSocialSection
                 onGooglePress={onGooglePress}
                 googleTestID="register-google-button"
+                disabled={registrationDisabled}
               />
 
               <View style={[styles.securityBadge, { gap: tokens.spacing.space2 }]}>

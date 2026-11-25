@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
-import { Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import ConfettiCannon from 'react-native-confetti-cannon';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { AmountDisplay, PaymentStatus } from '@/components/financial';
-import { AppButton, AppCard, AppIcon } from '@/components/ui';
+import { AmountDisplay } from '@/components/financial';
+import { AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import type { CurrencyCode } from '@/types/common';
 
@@ -32,7 +31,6 @@ export function PaymentReceivedModal({
   onAccept,
 }: PaymentReceivedModalProps) {
   const { tokens } = useAppTheme();
-  const { width: windowWidth } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const badgeScale = useSharedValue(visible ? 1 : 0.8);
   const badgeOpacity = useSharedValue(1);
@@ -59,38 +57,21 @@ export function PaymentReceivedModal({
     transform: [{ scale: badgeScale.value }],
   }));
 
-  const confettiColors = [
-    tokens.colors.primary,
-    tokens.colors.success,
-    tokens.colors.warning,
-    tokens.colors.primaryLight,
-    tokens.colors.lavender,
-  ];
-
   return (
     <Modal
       visible={visible}
-      transparent
+      transparent={false}
       animationType="fade"
       onRequestClose={onAccept}
       statusBarTranslucent
     >
-      <View style={[styles.backdrop, { backgroundColor: tokens.colors.backdrop }]}>
-        <AppCard
-          variant="standard"
-          testID="payment-received-modal"
-          style={[
-            styles.card,
-            tokens.shadows.floating,
-            {
-              borderRadius: tokens.radius.radiusLarge,
-              paddingHorizontal: tokens.spacing.space6,
-              paddingVertical: tokens.spacing.space8,
-            },
-          ]}
-        >
+      <View
+        testID="payment-received-modal"
+        style={[styles.fullscreen, { backgroundColor: tokens.colors.success }]}
+      >
+        <View style={styles.content}>
           <Animated.View style={[styles.celebrationContainer, badgeAnimatedStyle]}>
-            {CELEBRATION_RAY_ANGLES.map((angle, index) => (
+            {CELEBRATION_RAY_ANGLES.map((angle) => (
               <View
                 key={angle}
                 style={[styles.raySlot, { transform: [{ rotate: `${angle}deg` }] }]}
@@ -100,8 +81,7 @@ export function PaymentReceivedModal({
                     styles.rayDash,
                     {
                       borderRadius: tokens.radius.radiusFull,
-                      backgroundColor:
-                        index % 2 === 0 ? tokens.colors.primary : tokens.colors.success,
+                      backgroundColor: 'rgba(255, 255, 255, 0.72)',
                     },
                   ]}
                 />
@@ -112,32 +92,28 @@ export function PaymentReceivedModal({
               style={[
                 styles.checkCircle,
                 {
-                  backgroundColor: tokens.colors.success,
+                  backgroundColor: tokens.colors.textOnPrimary,
                   borderRadius: tokens.radius.radiusFull,
                 },
               ]}
             >
               <AppIcon
                 name="check"
-                size={42}
-                strokeWidth={2.5}
-                color={tokens.colors.textOnPrimary}
+                size={48}
+                strokeWidth={2.8}
+                color={tokens.colors.success}
                 testID="payment-received-check-icon"
               />
             </View>
           </Animated.View>
-
-          <View style={{ marginTop: tokens.spacing.space4 }}>
-            <PaymentStatus status="confirmed" label="Operación exitosa" />
-          </View>
 
           <Text
             style={[
               styles.title,
               {
                 fontFamily: tokens.typography.families.bold,
-                color: tokens.colors.textPrimary,
-                marginTop: tokens.spacing.space3,
+                color: tokens.colors.textOnPrimary,
+                marginTop: tokens.spacing.space5,
               },
             ]}
           >
@@ -148,9 +124,9 @@ export function PaymentReceivedModal({
             amountCents={amountCents}
             currency={currency}
             size="display"
-            tone="default"
+            tone="onPrimary"
             testID="payment-received-amount"
-            style={{ marginTop: tokens.spacing.space2 }}
+            style={{ marginTop: tokens.spacing.space2, fontSize: 44, lineHeight: 52 }}
           />
 
           <Text
@@ -158,90 +134,106 @@ export function PaymentReceivedModal({
             style={[
               styles.timeLabel,
               {
-                fontFamily: tokens.typography.families.regular,
-                color: tokens.colors.textSecondary,
-                marginTop: tokens.spacing.space1,
+                fontFamily: tokens.typography.families.medium,
+                color: 'rgba(255, 255, 255, 0.92)',
+                marginTop: tokens.spacing.space2,
               },
             ]}
           >
             {concept ? `${concept} · ${timeLabel}` : timeLabel}
           </Text>
+        </View>
 
-          <View style={[styles.buttonContainer, { marginTop: tokens.spacing.space8 }]}>
-            <AppButton
-              variant="primary"
-              label="Aceptar"
-              onPress={onAccept}
-              testID="payment-received-accept-button"
-            />
-          </View>
-        </AppCard>
-
-        {visible ? (
-          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-            <ConfettiCannon
-              count={90}
-              origin={{ x: windowWidth / 2, y: -10 }}
-              explosionSpeed={360}
-              fallSpeed={2500}
-              fadeOut
-              autoStart
-              colors={confettiColors}
-              testID="payment-received-confetti"
-            />
-          </View>
-        ) : null}
+        <View style={styles.footer}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onAccept}
+            testID="payment-received-accept-button"
+            style={({ pressed }) => [
+              styles.acceptButton,
+              {
+                backgroundColor: tokens.colors.textOnPrimary,
+                borderRadius: tokens.radius.radiusFull,
+                opacity: pressed ? 0.9 : 1,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.acceptLabel,
+                {
+                  fontFamily: tokens.typography.families.bold,
+                  color: tokens.colors.success,
+                },
+              ]}
+            >
+              Listo
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  fullscreen: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 48,
+  },
+  content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-    alignItems: 'center',
   },
   celebrationContainer: {
-    width: 132,
-    height: 132,
+    width: 148,
+    height: 148,
     alignItems: 'center',
     justifyContent: 'center',
   },
   raySlot: {
     position: 'absolute',
-    width: 132,
-    height: 132,
+    width: 148,
+    height: 148,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
   rayDash: {
     width: 4,
-    height: 14,
+    height: 16,
   },
   checkCircle: {
-    width: 82,
-    height: 82,
+    width: 96,
+    height: 96,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 28,
+    lineHeight: 36,
     textAlign: 'center',
   },
   timeLabel: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: 'center',
   },
-  buttonContainer: {
+  footer: {
     width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+  },
+  acceptButton: {
+    width: '100%',
+    minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptLabel: {
+    fontSize: 17,
+    lineHeight: 22,
   },
 });

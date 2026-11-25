@@ -1,12 +1,19 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
+import { useUiStore } from '@/stores';
 
 export default function TabsLayout() {
   const { tokens } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const sessionStatus = useUiStore((state) => state.sessionStatus);
+
+  if (sessionStatus === 'unauthenticated') {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
   const bottomPadding = Math.max(insets.bottom, tokens.spacing.space2);
 
   return (
@@ -33,24 +40,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Inicio',
+          title: 'Cobrar',
           tabBarIcon: ({ focused }) => (
             <AppIcon
-              name="home"
-              size={22}
-              strokeWidth={focused ? 2.1 : 1.8}
-              color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="pos"
-        options={{
-          title: 'POS',
-          tabBarIcon: ({ focused }) => (
-            <AppIcon
-              name="store"
+              name="qr-code"
               size={22}
               strokeWidth={focused ? 2.1 : 1.8}
               color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
@@ -61,7 +54,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="activity"
         options={{
-          title: 'Actividad',
+          title: 'Hoy',
           tabBarIcon: ({ focused }) => (
             <AppIcon
               name="arrow-left-right"
@@ -73,23 +66,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="reports"
-        options={{
-          title: 'Reportes',
-          tabBarIcon: ({ focused }) => (
-            <AppIcon
-              name="chart-no-axes-column"
-              size={22}
-              strokeWidth={focused ? 2.1 : 1.8}
-              color={focused ? tokens.colors.primary : tokens.colors.textSecondary}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
-          title: 'Perfil',
+          title: 'Cuenta',
           tabBarIcon: ({ focused }) => (
             <AppIcon
               name="user-round"

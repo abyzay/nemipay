@@ -15,7 +15,7 @@ jest.mock('@react-native-vector-icons/ionicons', () => {
 });
 
 describe('Pantalla de bienvenida (WelcomeScreen)', () => {
-  it('renderiza la marca, carrusel de bienvenida, indicadores y botones principales', async () => {
+  it('renderiza la marca, carrusel de bienvenida, indicadores y botones Comenzar e Iniciar sesión', async () => {
     const onLoginPress = jest.fn();
     const onCreateAccountPress = jest.fn();
 

@@ -1,6 +1,9 @@
 export const paymentKeys = {
   all: ['payments'] as const,
-  orders: () => [...paymentKeys.all, 'orders'] as const,
-  orderDetail: (orderId: string) => [...paymentKeys.orders(), orderId] as const,
-  orderStatus: (orderId: string) => [...paymentKeys.orderDetail(orderId), 'status'] as const,
+  charges: () => [...paymentKeys.all, 'charges'] as const,
+  charge: (chargeId: string) => [...paymentKeys.charges(), chargeId] as const,
+  chargesToday: () => [...paymentKeys.all, 'today'] as const,
+  dailySummary: () => [...paymentKeys.all, 'daily-summary'] as const,
+  products: () => ['products'] as const,
+  merchant: (userId: string) => ['merchant', userId] as const,
 } as const;

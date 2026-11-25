@@ -1,17 +1,14 @@
-import type { AppIconName } from '@/components/ui';
+import type { ChargeStatus } from '@/features/payments/types';
 import type { CurrencyCode } from '@/types/common';
 
-export type MovementChannel = 'codi_qr' | 'codi_push';
-export type MovementStatus = 'confirmed';
+export type MovementStatus = ChargeStatus;
 
-export interface ReceivedMovement {
+export interface TodayMovement {
   id: string;
   concept: string;
-  payerReference: string;
   amountCents: number;
   currency: CurrencyCode;
   timeLabel: string;
   status: MovementStatus;
-  channel: MovementChannel;
-  iconName: AppIconName;
+  paidAfterExpiry: boolean;
 }

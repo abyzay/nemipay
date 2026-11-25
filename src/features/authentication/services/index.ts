@@ -1,2 +1,8 @@
-export { authenticateWithMockJson } from './mockAuthService';
-export type { MockLoginResult } from './mockAuthService';
+export {
+  fetchMerchantProfile,
+  getCurrentAccessToken,
+  mapSupabaseUser,
+  signInWithEmailPassword,
+  signOutSession,
+  updateMerchantName,
+} from './supabaseAuthService';

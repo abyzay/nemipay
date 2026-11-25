@@ -7,6 +7,7 @@ export const API_CONFIG = {
   defaultHeaders: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
+    apikey: env.supabaseAnonKey,
   },
 } as const;
 
@@ -14,7 +15,7 @@ let authTokenProvider: AuthTokenProvider | null = null;
 let sessionExpiredHandler: SessionExpiredHandler | null = null;
 
 /**
- * Registra el proveedor de token de sesión (por ejemplo, desde SecureStore)
+ * Registra el proveedor de token de sesión (Supabase Auth)
  * sin acoplar la capa HTTP a un módulo de autenticación concreto.
  */
 export function setAuthTokenProvider(provider: AuthTokenProvider | null): void {

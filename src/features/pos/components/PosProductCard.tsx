@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AmountDisplay } from '@/components/financial';
 import { AppCard, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
@@ -35,31 +35,18 @@ export function PosProductCard({
       style={styles.card}
     >
       <View style={styles.topRow}>
-        {product.imageUri ? (
-          <Image
-            source={{ uri: product.imageUri }}
-            style={[
-              styles.productImage,
-              {
-                borderRadius: tokens.radius.radiusMD,
-                backgroundColor: tokens.colors.surface,
-              },
-            ]}
-            testID={`pos-product-image-${product.id}`}
-          />
-        ) : (
-          <View
-            style={[
-              styles.iconBox,
-              {
-                backgroundColor: isInCart ? tokens.colors.background : tokens.colors.lavenderSoft,
-                borderRadius: tokens.radius.radiusMD,
-              },
-            ]}
-          >
-            <AppIcon name={product.iconName} size={20} color={tokens.colors.primary} />
-          </View>
-        )}
+        <Text
+          numberOfLines={2}
+          style={[
+            styles.name,
+            {
+              fontFamily: tokens.typography.families.semiBold,
+              color: tokens.colors.textPrimary,
+            },
+          ]}
+        >
+          {product.name}
+        </Text>
 
         <View style={styles.topActions}>
           {isInCart ? (
@@ -90,7 +77,7 @@ export function PosProductCard({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Editar o eliminar ${product.name}`}
+            accessibilityLabel={`Editar ${product.name}`}
             hitSlop={8}
             onPress={() => onEditPress(product)}
             testID={`pos-product-edit-${product.id}`}
@@ -106,26 +93,12 @@ export function PosProductCard({
               },
             ]}
           >
-            <AppIcon name="ellipsis-vertical" size={14} color={tokens.colors.textSecondary} />
+            <AppIcon name="pencil" size={14} color={tokens.colors.textSecondary} />
           </Pressable>
         </View>
       </View>
 
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.name,
-          {
-            fontFamily: tokens.typography.families.semiBold,
-            color: tokens.colors.textPrimary,
-            marginTop: tokens.spacing.space2,
-          },
-        ]}
-      >
-        {product.name}
-      </Text>
-
-      <View style={[styles.bottomRow, { marginTop: tokens.spacing.space1 }]}>
+      <View style={[styles.bottomRow, { marginTop: tokens.spacing.space3 }]}>
         <AmountDisplay amountCents={product.priceCents} size="sm" tone="primary" omitZeroCents />
 
         {isInCart ? (
@@ -175,7 +148,7 @@ export function PosProductCard({
               },
             ]}
           >
-            + Agregar
+            + Tocar
           </Text>
         )}
       </View>
@@ -186,23 +159,14 @@ export function PosProductCard({
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 116,
+    minHeight: 108,
     justifyContent: 'space-between',
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  productImage: {
-    width: 40,
-    height: 40,
+    gap: 6,
   },
   topActions: {
     flexDirection: 'row',
@@ -221,13 +185,14 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   editButton: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
   name: {
-    fontSize: 14,
+    flex: 1,
+    fontSize: 15,
     lineHeight: 20,
   },
   bottomRow: {
@@ -240,8 +205,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepBtn: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

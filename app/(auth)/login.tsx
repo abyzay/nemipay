@@ -3,28 +3,32 @@ import { router } from 'expo-router';
 import { Snackbar } from 'react-native-paper';
 import { LoginScreen } from '@/features/authentication/components';
 import type { LoginFormValues } from '@/features/authentication/schemas';
-import { authenticateWithMockJson } from '@/features/authentication/services';
+import { signInWithEmailPassword } from '@/features/authentication/services';
 import { useAppTheme } from '@/hooks';
 import { useUiStore } from '@/stores';
 
 export default function LoginRoute() {
   const { tokens } = useAppTheme();
   const setAuthenticatedUser = useUiStore((state) => state.setAuthenticatedUser);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; isError: boolean } | null>(null);
 
-  const handleLoginSubmit = (values: LoginFormValues) => {
-    const result = authenticateWithMockJson(values.identifier, values.password);
-
-    if (!result.success) {
+  const handleLoginSubmit = async (values: LoginFormValues) => {
+    setIsSubmitting(true);
+    setFeedback(null);
+    try {
+      const { user } = await signInWithEmailPassword(values.identifier, values.password);
+      setAuthenticatedUser(user);
+      router.replace('/(tabs)');
+    } catch (error) {
       setFeedback({
-        message: result.errorMessage,
+        message:
+          error instanceof Error ? error.message : 'No pudimos iniciar sesión. Intenta de nuevo.',
         isError: true,
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setAuthenticatedUser(result.user);
-    router.replace('/(tabs)');
   };
 
   return (
@@ -32,9 +36,12 @@ export default function LoginRoute() {
       <LoginScreen
         onBackPress={() => router.back()}
         onSubmit={handleLoginSubmit}
+        isSubmitting={isSubmitting}
+        defaultIdentifier="demo@nemipay.mx"
+        defaultPassword="12345678"
         onForgotPasswordPress={() => {
           setFeedback({
-            message: 'Acceso temporal de prueba: usuario abyzay / contraseña 12345678.',
+            message: 'Usa las credenciales de acceso de tu comercio para entrar.',
             isError: false,
           });
         }}

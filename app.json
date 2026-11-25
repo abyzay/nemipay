@@ -23,6 +23,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "experiments": {
@@ -40,27 +41,6 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF"
-        }
-      ],
-      "expo-secure-store",
-      [
-        "expo-local-authentication",
-        {
-          "faceIDPermission": "Permitir que NemiPay utilice Face ID para proteger el acceso a tu negocio."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "color": "#7200D9"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "cameraPermission": "Permitir que NemiPay utilice la cámara para tomar fotos de tus productos.",
-          "photosPermission": "Permitir que NemiPay acceda a tus fotos para asignar imágenes a tus productos.",
-          "microphonePermission": false
         }
       ]
     ]

@@ -32,8 +32,8 @@ yarn-error.*
 
 # local env files
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # testing and temporary checks
 coverage/

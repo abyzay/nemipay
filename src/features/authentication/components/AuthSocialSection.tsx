@@ -6,6 +6,7 @@ import { useAppTheme } from '@/hooks';
 export interface AuthSocialSectionProps {
   onGooglePress?: () => void;
   googleTestID?: string;
+  disabled?: boolean;
 }
 
 function GoogleIcon() {
@@ -34,7 +35,11 @@ function GoogleIcon() {
 /**
  * Separador y botón social de Google compartido entre Login y Registro.
  */
-export function AuthSocialSection({ onGooglePress, googleTestID }: AuthSocialSectionProps) {
+export function AuthSocialSection({
+  onGooglePress,
+  googleTestID,
+  disabled = false,
+}: AuthSocialSectionProps) {
   const { tokens } = useAppTheme();
 
   return (
@@ -57,7 +62,9 @@ export function AuthSocialSection({ onGooglePress, googleTestID }: AuthSocialSec
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Continuar con Google"
-        onPress={onGooglePress}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={disabled ? undefined : onGooglePress}
         testID={googleTestID}
         style={({ pressed }) => [
           styles.googleButton,
@@ -66,6 +73,7 @@ export function AuthSocialSection({ onGooglePress, googleTestID }: AuthSocialSec
             borderRadius: tokens.radius.radiusFull,
             borderColor: tokens.colors.border,
             backgroundColor: pressed ? tokens.colors.surface : tokens.colors.background,
+            opacity: disabled ? 0.5 : 1,
             gap: tokens.spacing.space3,
           },
         ]}

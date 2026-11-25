@@ -17,6 +17,7 @@ module.exports = defineConfig([
       'android/*',
       '.tmp-export-check/*',
       'expo-env.d.ts',
+      'supabase/functions/**',
     ],
   },
 ]);

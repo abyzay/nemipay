@@ -1,21 +1,52 @@
-import type { CurrencyCode, IdempotencyKey, IsoDateString } from '@/types/common';
+import type { ChargeStatus as DbChargeStatus } from '@/types/database';
 
 /**
  * Regla fundamental de seguridad financiera en NemiPay:
- * La aplicación móvil NUNCA determina por sí sola que un pago fue recibido.
- * Toda confirmación válida debe provenir del backend tras validar la operación.
+ * La aplicación cliente NUNCA determina por sí sola que un pago fue recibido.
+ * Toda confirmación válida debe provenir del servidor.
  */
-export type PaymentVerificationSource = 'backend';
+export type ChargeStatus = DbChargeStatus;
 
-export type PaymentOrderStatus =
-  'pending' | 'awaiting_payment' | 'confirmed' | 'expired' | 'cancelled' | 'failed';
+export const TERMINAL_OR_STOP_STATUSES: ReadonlySet<ChargeStatus> = new Set([
+  'CONFIRMED',
+  'FAILED',
+  'EXPIRED',
+  'CANCELLED',
+  'UNDER_REVIEW',
+]);
 
-export interface BasePaymentOrderReference {
-  orderId: string;
+export interface ChargeItemSnapshot {
+  productId: string;
+  name: string;
+  priceCents: number;
+  quantity: number;
+}
+
+export interface Charge {
+  id: string;
+  status: ChargeStatus;
   amountCents: number;
-  currency: CurrencyCode;
-  status: PaymentOrderStatus;
-  verifiedBy: PaymentVerificationSource;
-  idempotencyKey?: IdempotencyKey;
-  createdAt: IsoDateString;
+  currency: string;
+  concept: string;
+  items: ChargeItemSnapshot[] | null;
+  qrPayload: string | null;
+  expiresAt: string;
+  paidAt: string | null;
+  paidAfterExpiry: boolean;
+  failureReason: string | null;
+  createdAt: string;
+}
+
+export type CreateChargeInput =
+  | {
+      amountCents: number;
+      concept?: string;
+    }
+  | {
+      items: { productId: string; quantity: number }[];
+    };
+
+export interface DailySummary {
+  totalConfirmedCents: number;
+  countConfirmed: number;
 }

@@ -6,35 +6,35 @@ import { useAppTheme } from '@/hooks';
 
 export default function RegisterRoute() {
   const { tokens } = useAppTheme();
-  const [feedback, setFeedback] = useState<{ message: string; isSuccess: boolean } | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; isError: boolean } | null>(null);
 
   return (
     <>
       <RegisterScreen
+        registrationDisabled
         onBackPress={() => router.back()}
         onSubmit={() => {
           setFeedback({
-            message:
-              'Registro validado correctamente. La conexión con el backend se integrará en la siguiente etapa.',
-            isSuccess: true,
+            message: 'El registro público está deshabilitado por el momento.',
+            isError: false,
           });
         }}
         onGooglePress={() => {
           setFeedback({
-            message: 'Registro con Google disponible próximamente.',
-            isSuccess: false,
+            message: 'El registro público está deshabilitado por el momento.',
+            isError: false,
           });
         }}
         onTermsPress={() => {
           setFeedback({
             message: 'Términos y condiciones disponibles próximamente.',
-            isSuccess: false,
+            isError: false,
           });
         }}
         onPrivacyPress={() => {
           setFeedback({
             message: 'Aviso de privacidad disponible próximamente.',
-            isSuccess: false,
+            isError: false,
           });
         }}
       />
@@ -44,7 +44,7 @@ export default function RegisterRoute() {
         onDismiss={() => setFeedback(null)}
         duration={3000}
         style={{
-          backgroundColor: feedback?.isSuccess ? tokens.colors.success : tokens.colors.primaryDark,
+          backgroundColor: feedback?.isError ? tokens.colors.error : tokens.colors.primaryDark,
         }}
       >
         {feedback?.message ?? ''}

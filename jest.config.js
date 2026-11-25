@@ -7,5 +7,11 @@ module.exports = {
     '^lucide-react-native$':
       '<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js',
   },
-  testPathIgnorePatterns: ['/node_modules/', '/.expo/', '/dist/', '/.tmp-export-check/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.expo/',
+    '/dist/',
+    '/.tmp-export-check/',
+    '/supabase/',
+  ],
 };

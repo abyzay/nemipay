@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { createQueryClient, shouldRetryQuery } from '@/config/queryClient';
-import { movementKeys } from '@/features/movements/queries/keys';
 import { paymentKeys } from '@/features/payments/queries/keys';
-import { reportKeys } from '@/features/reports/queries/keys';
 import {
   ApiError,
   NetworkError,
@@ -42,9 +40,10 @@ describe('Configuración fintech de TanStack Query', () => {
   });
 
   it('organiza jerárquicamente las Query Keys por funcionalidad', () => {
-    expect(paymentKeys.orderDetail('ord-1')).toEqual(['payments', 'orders', 'ord-1']);
-    expect(paymentKeys.orderStatus('ord-1')).toEqual(['payments', 'orders', 'ord-1', 'status']);
-    expect(movementKeys.list({ page: 1 })).toEqual(['movements', 'list', { page: 1 }]);
-    expect(reportKeys.summary('daily')).toEqual(['reports', 'summary', 'daily']);
+    expect(paymentKeys.charge('chg-1')).toEqual(['payments', 'charges', 'chg-1']);
+    expect(paymentKeys.chargesToday()).toEqual(['payments', 'today']);
+    expect(paymentKeys.dailySummary()).toEqual(['payments', 'daily-summary']);
+    expect(paymentKeys.products()).toEqual(['products']);
+    expect(paymentKeys.merchant('m-1')).toEqual(['merchant', 'm-1']);
   });
 });

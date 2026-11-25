@@ -1,8 +1,10 @@
 export {
-  buildCartConceptSummary,
+  POS_TEMPLATES,
+  archiveProduct,
   calculateCartTotalCents,
   calculateCartUnitsCount,
-  filterPosProducts,
-  getDefaultIconForCategory,
-  getInitialPosProducts,
-} from './mockPosService';
+  createProduct,
+  createProductsBatch,
+  fetchActiveProducts,
+  updateProduct,
+} from './productsService';
