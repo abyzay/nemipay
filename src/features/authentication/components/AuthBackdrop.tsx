@@ -3,14 +3,18 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppTheme } from '@/hooks';
 
+export interface AuthBackdropProps {
+  testID?: string;
+}
+
 /**
- * Fondo orgánico sutil en tonos lavanda del Design System para las pantallas de autenticación.
+ * Fondo orgánico sutil en tonos lavanda del Design System para las pantallas de autenticación y perfil.
  */
-export function AuthBackdrop() {
+export function AuthBackdrop({ testID }: AuthBackdropProps = {}) {
   const { tokens } = useAppTheme();
 
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} testID={testID}>
       <Svg
         width="100%"
         height="100%"

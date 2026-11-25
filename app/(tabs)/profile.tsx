@@ -12,6 +12,13 @@ export default function ProfileRoute() {
 
   return (
     <ProfileScreen
+      onBackPress={() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/(tabs)');
+        }
+      }}
       onLogoutPress={async () => {
         stopShiftKeepAwake();
         try {

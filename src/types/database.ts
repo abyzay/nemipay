@@ -16,17 +16,38 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          owner_name: string | null;
+          phone: string | null;
+          clabe: string | null;
+          bank_name: string | null;
+          notifications_enabled: boolean;
+          voice_announcements_enabled: boolean;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id: string;
           name: string;
+          owner_name?: string | null;
+          phone?: string | null;
+          clabe?: string | null;
+          bank_name?: string | null;
+          notifications_enabled?: boolean;
+          voice_announcements_enabled?: boolean;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
+          owner_name?: string | null;
+          phone?: string | null;
+          clabe?: string | null;
+          bank_name?: string | null;
+          notifications_enabled?: boolean;
+          voice_announcements_enabled?: boolean;
           created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
