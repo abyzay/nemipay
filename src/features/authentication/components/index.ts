@@ -1,7 +1,14 @@
+export { AuthBackdrop } from './AuthBackdrop';
 export { AuthHeader } from './AuthHeader';
 export type { AuthHeaderProps } from './AuthHeader';
-export { LoginIllustration } from './LoginIllustration';
-export type { LoginIllustrationProps } from './LoginIllustration';
+export { AuthSocialSection } from './AuthSocialSection';
+export type { AuthSocialSectionProps } from './AuthSocialSection';
+export { AuthIllustration, LoginIllustration, RegisterIllustration } from './LoginIllustration';
+export type {
+  AuthIllustrationProps,
+  LoginIllustrationProps,
+  RegisterIllustrationProps,
+} from './LoginIllustration';
 export { LoginScreen } from './LoginScreen';
 export type { LoginScreenProps } from './LoginScreen';
 export { RegisterScreen } from './RegisterScreen';

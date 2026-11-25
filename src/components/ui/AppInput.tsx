@@ -14,12 +14,15 @@ import {
 import { useAppTheme } from '@/hooks';
 import { AppIcon, type AppIconName } from './AppIcon';
 
+export type AppInputVariant = 'outlined' | 'soft';
+
 export interface AppInputProps extends Omit<
   TextInputProps,
   'style' | 'secureTextEntry' | 'placeholderTextColor'
 > {
   label?: string;
   helperText?: string;
+  variant?: AppInputVariant;
   leftIcon?: AppIconName;
   prefix?: string;
   isPassword?: boolean;
@@ -36,6 +39,7 @@ export interface AppInputProps extends Omit<
 export function AppInput({
   label,
   helperText,
+  variant = 'outlined',
   leftIcon,
   prefix,
   isPassword = false,
@@ -58,14 +62,25 @@ export function AppInput({
 
   const isDisabled = disabled || editable === false;
   const hasError = Boolean(error);
+  const isSoft = variant === 'soft';
 
   const borderColor = hasError
     ? tokens.colors.error
     : isFocused
       ? tokens.colors.primary
-      : tokens.colors.border;
+      : isSoft
+        ? tokens.colors.divider
+        : tokens.colors.border;
 
-  const backgroundColor = isDisabled ? tokens.colors.surfaceSecondary : tokens.colors.background;
+  const backgroundColor = isDisabled
+    ? tokens.colors.surfaceSecondary
+    : isSoft
+      ? isFocused
+        ? tokens.colors.background
+        : tokens.colors.surface
+      : tokens.colors.background;
+
+  const fieldRadius = isSoft ? tokens.radius.radiusLarge : tokens.radius.radiusInput;
 
   const iconColor = hasError
     ? tokens.colors.error
@@ -125,7 +140,7 @@ export function AppInput({
             height: tokens.layout.inputHeight,
             backgroundColor,
             borderColor,
-            borderRadius: tokens.radius.radiusInput,
+            borderRadius: fieldRadius,
             paddingHorizontal: tokens.spacing.space4,
             gap: tokens.spacing.space3,
           },

@@ -38,6 +38,13 @@ export default function LoginRoute() {
             isError: false,
           });
         }}
+        onGooglePress={() => {
+          setFeedback({
+            message: 'Inicio de sesión con Google disponible próximamente.',
+            isError: false,
+          });
+        }}
+        onRegisterPress={() => router.replace('/(auth)/register')}
       />
 
       <Snackbar

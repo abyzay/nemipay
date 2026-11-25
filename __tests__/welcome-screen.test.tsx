@@ -15,12 +15,9 @@ jest.mock('@react-native-vector-icons/ionicons', () => {
 });
 
 describe('Pantalla de bienvenida (WelcomeScreen)', () => {
-  it('renderiza la marca, textos principales, ilustración, botones y enlaces legales', async () => {
+  it('renderiza la marca, carrusel de bienvenida, indicadores y botones principales', async () => {
     const onLoginPress = jest.fn();
     const onCreateAccountPress = jest.fn();
-    const onNotificationsPress = jest.fn();
-    const onTermsPress = jest.fn();
-    const onPrivacyPress = jest.fn();
 
     await render(
       <AppProviders
@@ -30,37 +27,39 @@ describe('Pantalla de bienvenida (WelcomeScreen)', () => {
           insets: { top: 0, left: 0, right: 0, bottom: 0 },
         }}
       >
-        <WelcomeScreen
-          onLoginPress={onLoginPress}
-          onCreateAccountPress={onCreateAccountPress}
-          onNotificationsPress={onNotificationsPress}
-          onTermsPress={onTermsPress}
-          onPrivacyPress={onPrivacyPress}
-        />
+        <WelcomeScreen onLoginPress={onLoginPress} onCreateAccountPress={onCreateAccountPress} />
       </AppProviders>
     );
 
+    expect(screen.getByTestId('welcome-logo')).toBeOnTheScreen();
     expect(screen.getByText('NemiPay')).toBeOnTheScreen();
-    expect(screen.getByText('Cobra fácil.\nPaga seguro.')).toBeOnTheScreen();
-    expect(screen.getByText('Tu dinero y tus cobros QR,\nen un solo lugar.')).toBeOnTheScreen();
+    expect(screen.getByText('Cobra, recibe y\nhaz crecer tu negocio')).toBeOnTheScreen();
     expect(
       screen.getByLabelText('Ilustración de cobro con código QR de NemiPay')
     ).toBeOnTheScreen();
+
+    expect(screen.getByTestId('welcome-dot-0').props.accessibilityState).toEqual({
+      selected: true,
+    });
+    expect(screen.getByTestId('welcome-dot-1').props.accessibilityState).toEqual({
+      selected: false,
+    });
+    expect(screen.getByTestId('welcome-dot-2').props.accessibilityState).toEqual({
+      selected: false,
+    });
+
+    expect(screen.getByText('Comenzar')).toBeOnTheScreen();
     expect(screen.getByText('Iniciar sesión')).toBeOnTheScreen();
-    expect(screen.getByText('Crear cuenta')).toBeOnTheScreen();
-    expect(screen.getByText('Términos')).toBeOnTheScreen();
-    expect(screen.getByText('Aviso de privacidad.')).toBeOnTheScreen();
 
-    await fireEvent.press(screen.getByTestId('welcome-login-button'));
+    await fireEvent.press(screen.getByTestId('welcome-dot-1'));
+    expect(screen.getByTestId('welcome-dot-1').props.accessibilityState).toEqual({
+      selected: true,
+    });
+
     await fireEvent.press(screen.getByTestId('welcome-register-button'));
-    await fireEvent.press(screen.getByTestId('welcome-notifications-button'));
-    await fireEvent.press(screen.getByText('Términos'));
-    await fireEvent.press(screen.getByText('Aviso de privacidad.'));
+    await fireEvent.press(screen.getByTestId('welcome-login-button'));
 
-    expect(onLoginPress).toHaveBeenCalledTimes(1);
     expect(onCreateAccountPress).toHaveBeenCalledTimes(1);
-    expect(onNotificationsPress).toHaveBeenCalledTimes(1);
-    expect(onTermsPress).toHaveBeenCalledTimes(1);
-    expect(onPrivacyPress).toHaveBeenCalledTimes(1);
+    expect(onLoginPress).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 
@@ -10,12 +10,7 @@ export interface WelcomeActionsProps {
   onPrivacyPress?: () => void;
 }
 
-export function WelcomeActions({
-  onLoginPress,
-  onCreateAccountPress,
-  onTermsPress,
-  onPrivacyPress,
-}: WelcomeActionsProps) {
+export function WelcomeActions({ onLoginPress, onCreateAccountPress }: WelcomeActionsProps) {
   const { tokens } = useAppTheme();
 
   return (
@@ -23,58 +18,45 @@ export function WelcomeActions({
       style={[
         styles.container,
         {
-          paddingBottom: tokens.spacing.space2,
-          gap: tokens.spacing.space3,
+          paddingHorizontal: tokens.layout.screenHorizontalPadding,
+          paddingBottom: tokens.spacing.space4,
+          gap: tokens.spacing.space2,
         },
       ]}
     >
       <AppButton
         variant="primary"
-        label="Iniciar sesión"
-        onPress={onLoginPress}
-        testID="welcome-login-button"
-      />
-
-      <AppButton
-        variant="outlined"
-        label="Crear cuenta"
+        label="Comenzar"
         onPress={onCreateAccountPress}
         testID="welcome-register-button"
+        style={{ borderRadius: tokens.radius.radiusFull }}
       />
 
-      <Text
-        style={[
-          styles.legalText,
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Iniciar sesión"
+        onPress={onLoginPress}
+        testID="welcome-login-button"
+        style={({ pressed }) => [
+          styles.loginButton,
           {
-            fontFamily: tokens.typography.families.regular,
-            color: tokens.colors.textSecondary,
-            marginTop: tokens.spacing.space1,
+            minHeight: tokens.layout.minTouchTarget,
+            borderRadius: tokens.radius.radiusFull,
+            backgroundColor: pressed ? tokens.colors.lavenderSoft : 'transparent',
           },
         ]}
       >
-        {'Al continuar, aceptas nuestros\n'}
         <Text
-          accessibilityRole="link"
-          onPress={onTermsPress}
           style={{
             fontFamily: tokens.typography.families.semiBold,
+            fontSize: tokens.typography.scale.button.fontSize,
+            lineHeight: tokens.typography.scale.button.lineHeight,
             color: tokens.colors.primary,
           }}
         >
-          Términos
+          Iniciar sesión
         </Text>
-        {' y '}
-        <Text
-          accessibilityRole="link"
-          onPress={onPrivacyPress}
-          style={{
-            fontFamily: tokens.typography.families.semiBold,
-            color: tokens.colors.primary,
-          }}
-        >
-          Aviso de privacidad.
-        </Text>
-      </Text>
+      </Pressable>
     </View>
   );
 }
@@ -83,9 +65,9 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  legalText: {
-    fontSize: 13,
-    lineHeight: 19,
-    textAlign: 'center',
+  loginButton: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

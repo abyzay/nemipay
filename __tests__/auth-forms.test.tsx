@@ -76,14 +76,21 @@ describe('LoginScreen con validación Zod', () => {
     const onBackPress = jest.fn();
     const onSubmit = jest.fn();
     const onForgotPasswordPress = jest.fn();
+    const onGooglePress = jest.fn();
+    const onRegisterPress = jest.fn();
 
     await renderWithProviders(
       <LoginScreen
         onBackPress={onBackPress}
         onSubmit={onSubmit}
         onForgotPasswordPress={onForgotPasswordPress}
+        onGooglePress={onGooglePress}
+        onRegisterPress={onRegisterPress}
       />
     );
+
+    expect(screen.getByText('Inicia sesión')).toBeOnTheScreen();
+    expect(screen.getByText('Bienvenido de nuevo')).toBeOnTheScreen();
 
     const passwordInput = screen.getByTestId('login-password-input');
     expect(passwordInput.props.secureTextEntry).toBe(true);
@@ -107,8 +114,12 @@ describe('LoginScreen con validación Zod', () => {
 
     await fireEvent.press(screen.getByTestId('auth-back-button'));
     await fireEvent.press(screen.getByTestId('login-forgot-password-button'));
+    await fireEvent.press(screen.getByTestId('login-google-button'));
+    await fireEvent.press(screen.getByTestId('login-register-link'));
     expect(onBackPress).toHaveBeenCalledTimes(1);
     expect(onForgotPasswordPress).toHaveBeenCalledTimes(1);
+    expect(onGooglePress).toHaveBeenCalledTimes(1);
+    expect(onRegisterPress).toHaveBeenCalledTimes(1);
   });
 
   it('permite iniciar sesión con el usuario demo abyzay y contraseña 12345678 desde JSON', async () => {
@@ -204,6 +215,7 @@ describe('RegisterScreen con validación Zod', () => {
   it('envía el formulario cuando todos los campos y el checkbox son válidos', async () => {
     const onBackPress = jest.fn();
     const onSubmit = jest.fn();
+    const onGooglePress = jest.fn();
     const onTermsPress = jest.fn();
     const onPrivacyPress = jest.fn();
 
@@ -211,10 +223,15 @@ describe('RegisterScreen con validación Zod', () => {
       <RegisterScreen
         onBackPress={onBackPress}
         onSubmit={onSubmit}
+        onGooglePress={onGooglePress}
         onTermsPress={onTermsPress}
         onPrivacyPress={onPrivacyPress}
       />
     );
+
+    expect(screen.getByTestId('register-illustration')).toBeOnTheScreen();
+    expect(screen.getByText('Crear tu cuenta')).toBeOnTheScreen();
+    expect(screen.getByText('Es rápido y seguro')).toBeOnTheScreen();
 
     await fireEvent.changeText(screen.getByTestId('register-fullname-input'), 'Sofía López');
     await fireEvent.changeText(screen.getByTestId('register-phone-input'), '55 1234 5678');
@@ -236,10 +253,12 @@ describe('RegisterScreen con validación Zod', () => {
       );
     });
 
+    await fireEvent.press(screen.getByTestId('register-google-button'));
     await fireEvent.press(screen.getByText('Términos'));
     await fireEvent.press(screen.getByText('Aviso de privacidad.'));
     await fireEvent.press(screen.getByTestId('auth-back-button'));
 
+    expect(onGooglePress).toHaveBeenCalledTimes(1);
     expect(onTermsPress).toHaveBeenCalledTimes(1);
     expect(onPrivacyPress).toHaveBeenCalledTimes(1);
     expect(onBackPress).toHaveBeenCalledTimes(1);

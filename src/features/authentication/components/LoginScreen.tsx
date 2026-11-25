@@ -3,19 +3,29 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout';
-import { AppButton, AppInput } from '@/components/ui';
+import { AppButton, AppInput, NemiPayLogo } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { loginSchema, type LoginFormValues } from '../schemas';
+import { AuthBackdrop } from './AuthBackdrop';
 import { AuthHeader } from './AuthHeader';
+import { AuthSocialSection } from './AuthSocialSection';
 import { LoginIllustration } from './LoginIllustration';
 
 export interface LoginScreenProps {
   onBackPress: () => void;
   onSubmit: (values: LoginFormValues) => void;
   onForgotPasswordPress?: () => void;
+  onGooglePress?: () => void;
+  onRegisterPress?: () => void;
 }
 
-export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: LoginScreenProps) {
+export function LoginScreen({
+  onBackPress,
+  onSubmit,
+  onForgotPasswordPress,
+  onGooglePress,
+  onRegisterPress,
+}: LoginScreenProps) {
   const { tokens } = useAppTheme();
 
   const {
@@ -32,132 +42,187 @@ export function LoginScreen({ onBackPress, onSubmit, onForgotPasswordPress }: Lo
   });
 
   return (
-    <ScreenContainer scrollable>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-      >
-        <View style={styles.layout}>
-          <View>
-            <AuthHeader onBackPress={onBackPress} />
+    <View style={[styles.root, { backgroundColor: tokens.colors.background }]}>
+      <AuthBackdrop />
+      <ScreenContainer scrollable style={styles.transparent}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flex}
+        >
+          <View style={styles.layout}>
+            <View>
+              <AuthHeader onBackPress={onBackPress} />
 
-            <View style={[styles.headingGroup, { marginTop: tokens.spacing.space3 }]}>
-              <Text
-                style={[
-                  styles.title,
-                  {
-                    fontFamily: tokens.typography.families.bold,
-                    color: tokens.colors.textPrimary,
-                  },
-                ]}
+              <View style={[styles.brandGroup, { gap: tokens.spacing.space2 }]}>
+                <NemiPayLogo size="lg" layout="vertical" testID="auth-logo" />
+                <LoginIllustration testID="login-illustration" />
+              </View>
+
+              <View style={[styles.headingGroup, { marginTop: tokens.spacing.space2 }]}>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      fontFamily: tokens.typography.families.bold,
+                      fontSize: 26,
+                      lineHeight: 34,
+                      color: tokens.colors.textPrimary,
+                    },
+                  ]}
+                >
+                  Inicia sesión
+                </Text>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    {
+                      fontFamily: tokens.typography.families.regular,
+                      fontSize: tokens.typography.scale.body.fontSize,
+                      lineHeight: tokens.typography.scale.body.lineHeight,
+                      color: tokens.colors.textSecondary,
+                      marginTop: tokens.spacing.space1,
+                    },
+                  ]}
+                >
+                  Bienvenido de nuevo
+                </Text>
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.formGroup,
+                {
+                  gap: tokens.spacing.space3,
+                  paddingTop: tokens.spacing.space5,
+                  paddingBottom: tokens.spacing.space3,
+                },
+              ]}
+            >
+              <Controller
+                control={control}
+                name="identifier"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <AppInput
+                    variant="soft"
+                    leftIcon="mail-outline"
+                    placeholder="Correo o celular"
+                    accessibilityLabel="Correo o celular"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="username"
+                    returnKeyType="next"
+                    error={errors.identifier?.message}
+                    testID="login-identifier-input"
+                    errorTestID="login-identifier-error"
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <AppInput
+                    variant="soft"
+                    leftIcon="lock"
+                    placeholder="Contraseña"
+                    accessibilityLabel="Contraseña"
+                    isPassword
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="password"
+                    returnKeyType="done"
+                    onSubmitEditing={() => void handleSubmit(onSubmit)()}
+                    error={errors.password?.message}
+                    testID="login-password-input"
+                    errorTestID="login-password-error"
+                  />
+                )}
+              />
+
+              <View style={{ marginTop: tokens.spacing.space1 }}>
+                <AppButton
+                  variant="primary"
+                  label="Entrar"
+                  onPress={handleSubmit(onSubmit)}
+                  testID="login-submit-button"
+                  style={{ borderRadius: tokens.radius.radiusFull }}
+                />
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={onForgotPasswordPress}
+                testID="login-forgot-password-button"
+                style={({ pressed }) => [styles.forgotButton, { opacity: pressed ? 0.7 : 1 }]}
               >
-                ¡Qué gusto verte!
-              </Text>
-              <Text
-                style={[
-                  styles.subtitle,
-                  {
-                    fontFamily: tokens.typography.families.regular,
+                <Text
+                  style={{
+                    fontFamily: tokens.typography.families.medium,
+                    fontSize: tokens.typography.scale.bodySmall.fontSize,
+                    lineHeight: tokens.typography.scale.bodySmall.lineHeight,
                     color: tokens.colors.textSecondary,
-                    marginTop: tokens.spacing.space2,
-                  },
-                ]}
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </Text>
+              </Pressable>
+
+              <AuthSocialSection onGooglePress={onGooglePress} googleTestID="login-google-button" />
+            </View>
+
+            <View style={[styles.footerRow, { paddingBottom: tokens.spacing.space3 }]}>
+              <Text
+                style={{
+                  fontFamily: tokens.typography.families.regular,
+                  fontSize: tokens.typography.scale.bodySmall.fontSize,
+                  lineHeight: tokens.typography.scale.bodySmall.lineHeight,
+                  color: tokens.colors.textSecondary,
+                }}
               >
-                Ingresa a tu cuenta NemiPay
+                {'¿No tienes cuenta? '}
               </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onRegisterPress}
+                testID="login-register-link"
+                hitSlop={8}
+                style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+              >
+                <Text
+                  style={{
+                    fontFamily: tokens.typography.families.semiBold,
+                    fontSize: tokens.typography.scale.bodySmall.fontSize,
+                    lineHeight: tokens.typography.scale.bodySmall.lineHeight,
+                    color: tokens.colors.primary,
+                  }}
+                >
+                  Regístrate
+                </Text>
+              </Pressable>
             </View>
           </View>
-
-          <View style={[styles.illustrationGroup, { paddingVertical: tokens.spacing.space3 }]}>
-            <LoginIllustration testID="login-illustration" />
-          </View>
-
-          <View
-            style={[
-              styles.formGroup,
-              { gap: tokens.spacing.space4, paddingBottom: tokens.spacing.space4 },
-            ]}
-          >
-            <Controller
-              control={control}
-              name="identifier"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AppInput
-                  label="Usuario, celular o correo"
-                  leftIcon="user-round"
-                  placeholder="Ej. abyzay o 5512345678"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="username"
-                  returnKeyType="next"
-                  error={errors.identifier?.message}
-                  testID="login-identifier-input"
-                  errorTestID="login-identifier-error"
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AppInput
-                  label="Contraseña"
-                  leftIcon="lock"
-                  placeholder="Ingresa tu contraseña"
-                  isPassword
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="password"
-                  returnKeyType="done"
-                  onSubmitEditing={() => void handleSubmit(onSubmit)()}
-                  error={errors.password?.message}
-                  testID="login-password-input"
-                  errorTestID="login-password-error"
-                />
-              )}
-            />
-
-            <Pressable
-              accessibilityRole="button"
-              onPress={onForgotPasswordPress}
-              testID="login-forgot-password-button"
-              style={({ pressed }) => [styles.forgotButton, { opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Text
-                style={[
-                  styles.forgotText,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.primary,
-                  },
-                ]}
-              >
-                ¿Olvidaste tu contraseña?
-              </Text>
-            </Pressable>
-
-            <AppButton
-              variant="primary"
-              label="Iniciar sesión"
-              onPress={handleSubmit(onSubmit)}
-              testID="login-submit-button"
-            />
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </ScreenContainer>
+        </KeyboardAvoidingView>
+      </ScreenContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  transparent: {
+    backgroundColor: 'transparent',
+  },
   flex: {
     flex: 1,
   },
@@ -165,24 +230,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
+  brandGroup: {
+    alignItems: 'center',
+  },
   headingGroup: {
     alignItems: 'center',
   },
   title: {
-    fontSize: 30,
-    lineHeight: 38,
     letterSpacing: -0.5,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
     textAlign: 'center',
-  },
-  illustrationGroup: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   formGroup: {
     width: '100%',
@@ -192,8 +251,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 12,
   },
-  forgotText: {
-    fontSize: 14,
-    lineHeight: 20,
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -19,6 +19,12 @@ export default function RegisterRoute() {
             isSuccess: true,
           });
         }}
+        onGooglePress={() => {
+          setFeedback({
+            message: 'Registro con Google disponible próximamente.',
+            isSuccess: false,
+          });
+        }}
         onTermsPress={() => {
           setFeedback({
             message: 'Términos y condiciones disponibles próximamente.',

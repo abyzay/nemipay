@@ -3,26 +3,45 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppTheme } from '@/hooks';
 
-export type LogoSize = 'sm' | 'md' | 'lg';
+export type LogoSize = 'sm' | 'md' | 'lg' | 'xl';
+export type LogoLayout = 'horizontal' | 'vertical';
 
 export interface NemiPayLogoProps {
   size?: LogoSize;
+  layout?: LogoLayout;
   showWordmark?: boolean;
   testID?: string;
 }
 
-const SIZE_CONFIG: Record<LogoSize, { iconSize: number; fontSize: number; gap: number }> = {
-  sm: { iconSize: 24, fontSize: 18, gap: 6 },
-  md: { iconSize: 32, fontSize: 22, gap: 8 },
-  lg: { iconSize: 40, fontSize: 26, gap: 10 },
+const SIZE_CONFIG: Record<
+  LogoSize,
+  { iconSize: number; fontSize: number; lineHeight: number; gap: number; letterSpacing: number }
+> = {
+  sm: { iconSize: 24, fontSize: 18, lineHeight: 24, gap: 6, letterSpacing: -0.4 },
+  md: { iconSize: 32, fontSize: 22, lineHeight: 28, gap: 8, letterSpacing: -0.5 },
+  lg: { iconSize: 40, fontSize: 26, lineHeight: 32, gap: 10, letterSpacing: -0.5 },
+  xl: { iconSize: 64, fontSize: 34, lineHeight: 40, gap: 10, letterSpacing: -0.7 },
 };
 
-export function NemiPayLogo({ size = 'md', showWordmark = true, testID }: NemiPayLogoProps) {
+export function NemiPayLogo({
+  size = 'md',
+  layout = 'horizontal',
+  showWordmark = true,
+  testID,
+}: NemiPayLogoProps) {
   const { tokens } = useAppTheme();
   const dimensions = SIZE_CONFIG[size];
+  const isVertical = layout === 'vertical';
 
   return (
-    <View style={[styles.container, { gap: dimensions.gap }]} testID={testID}>
+    <View
+      style={[
+        styles.container,
+        isVertical ? styles.vertical : styles.horizontal,
+        { gap: dimensions.gap },
+      ]}
+      testID={testID}
+    >
       <Svg
         width={dimensions.iconSize}
         height={dimensions.iconSize}
@@ -55,14 +74,13 @@ export function NemiPayLogo({ size = 'md', showWordmark = true, testID }: NemiPa
       </Svg>
       {showWordmark ? (
         <Text
-          style={[
-            styles.wordmark,
-            {
-              fontFamily: tokens.typography.families.bold,
-              fontSize: dimensions.fontSize,
-              color: tokens.colors.textPrimary,
-            },
-          ]}
+          style={{
+            fontFamily: tokens.typography.families.bold,
+            fontSize: dimensions.fontSize,
+            lineHeight: dimensions.lineHeight,
+            letterSpacing: dimensions.letterSpacing,
+            color: tokens.colors.textPrimary,
+          }}
         >
           NemiPay
         </Text>
@@ -73,10 +91,12 @@ export function NemiPayLogo({ size = 'md', showWordmark = true, testID }: NemiPa
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
   },
-  wordmark: {
-    letterSpacing: -0.5,
+  horizontal: {
+    flexDirection: 'row',
+  },
+  vertical: {
+    flexDirection: 'column',
   },
 });
