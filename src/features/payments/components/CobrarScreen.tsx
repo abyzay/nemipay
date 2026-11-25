@@ -1,185 +1,74 @@
-import React, { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ScreenContainer } from '@/components/layout';
-import { AppBadge, AppButton, AppIcon } from '@/components/ui';
-import { PosScreen } from '@/features/pos/components';
-import { useProductsQuery } from '@/features/pos/hooks/useProducts';
+import { AppHeader, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
-import { useUiStore, type ChargeEntryMode } from '@/stores';
+import { useUiStore } from '@/stores';
 import { formatCurrencyFromCents } from '@/utils/currency';
 import { paymentKeys } from '../queries/keys';
-import { startShiftAnnouncement } from '../services/announce';
 import { fetchDailySummary } from '../services/chargesService';
 import { FreeAmountKeypad } from './FreeAmountKeypad';
 
 export interface CobrarScreenProps {
-  initialMode?: ChargeEntryMode;
   onBackPress?: () => void;
 }
 
-export function CobrarScreen({ initialMode, onBackPress }: CobrarScreenProps = {}) {
+export function CobrarScreen({ onBackPress }: CobrarScreenProps = {}) {
   const { tokens } = useAppTheme();
   const authenticatedUser = useUiStore((state) => state.authenticatedUser);
-  const shiftActive = useUiStore((state) => state.shiftActive);
-  const setShiftActive = useUiStore((state) => state.setShiftActive);
-  const lastChargeMode = useUiStore((state) => state.lastChargeMode);
-  const setLastChargeMode = useUiStore((state) => state.setLastChargeMode);
 
-  const productsQuery = useProductsQuery(Boolean(authenticatedUser?.id));
   const summaryQuery = useQuery({
     queryKey: paymentKeys.dailySummary(),
     queryFn: fetchDailySummary,
     enabled: Boolean(authenticatedUser?.id),
   });
 
-  const userManuallySwitchedRef = useRef(false);
-
-  useEffect(() => {
-    if (initialMode) {
-      userManuallySwitchedRef.current = true;
-      setLastChargeMode(initialMode);
-    }
-  }, [initialMode, setLastChargeMode]);
-
-  useEffect(() => {
-    if (
-      !userManuallySwitchedRef.current &&
-      productsQuery.isSuccess &&
-      productsQuery.data.length === 0 &&
-      lastChargeMode !== 'free_amount'
-    ) {
-      setLastChargeMode('free_amount');
-    }
-  }, [lastChargeMode, productsQuery.data, productsQuery.isSuccess, setLastChargeMode]);
-
-  const handleSelectMode = (mode: ChargeEntryMode) => {
-    userManuallySwitchedRef.current = true;
-    setLastChargeMode(mode);
-  };
-
-  const handleStartShift = async () => {
-    await startShiftAnnouncement();
-    setShiftActive(true);
-  };
-
   const totalCents = summaryQuery.data?.totalConfirmedCents ?? 0;
   const countConfirmed = summaryQuery.data?.countConfirmed ?? 0;
   const countLabel = countConfirmed === 1 ? '1 cobro' : `${countConfirmed} cobros`;
 
   return (
-    <ScreenContainer edges={['top']}>
-      <View
-        style={[
-          styles.container,
-          { gap: tokens.spacing.space3, paddingTop: tokens.spacing.space2 },
-        ]}
-      >
-        <View style={styles.topHeader}>
-          {onBackPress ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Regresar"
-              onPress={onBackPress}
-              testID="cobrar-back-button"
-              style={({ pressed }) => [
-                styles.backButton,
-                {
-                  borderRadius: tokens.radius.radiusFull,
-                  backgroundColor: pressed ? tokens.colors.lavenderSoft : 'transparent',
-                },
-              ]}
-            >
-              <AppIcon name="chevron-left" size={24} color={tokens.colors.textPrimary} />
-            </Pressable>
-          ) : null}
-          <View style={styles.summaryPill}>
-            <Text
-              testID="cobrar-today-summary"
-              style={[
-                styles.summaryText,
-                tokens.typography.tabularNums,
-                {
-                  fontFamily: tokens.typography.families.semiBold,
-                  color: tokens.colors.textPrimary,
-                },
-              ]}
-            >
-              {`Hoy: ${formatCurrencyFromCents(totalCents, { omitZeroCents: true })} · ${countLabel}`}
-            </Text>
-          </View>
-
-          {shiftActive ? (
-            <AppBadge
-              label="Turno activo"
-              variant="success"
-              icon="volume-2"
-              testID="shift-active-badge"
-            />
-          ) : (
-            <AppButton
-              variant="outlined"
-              size="md"
-              fullWidth={false}
-              leftIcon="volume-2"
-              label="Iniciar turno"
-              onPress={() => void handleStartShift()}
-              testID="start-shift-button"
-            />
-          )}
-        </View>
+    <ScreenContainer edges={['top', 'bottom']}>
+      <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
+        <AppHeader
+          title="Cobrar con QR"
+          onBackPress={onBackPress}
+          backTestID="cobrar-back-button"
+          testID="cobrar-header"
+        />
 
         <View
           style={[
-            styles.modeSwitch,
+            styles.summaryPill,
             {
-              backgroundColor: tokens.colors.surfaceSecondary,
+              backgroundColor: tokens.colors.lavenderSoft,
+              borderColor: tokens.colors.lavenderBorder,
               borderRadius: tokens.radius.radiusFull,
-              padding: tokens.spacing.space1,
+              paddingHorizontal: tokens.spacing.space3 + 2,
+              paddingVertical: tokens.spacing.space1 + 3,
+              gap: tokens.spacing.space2,
             },
           ]}
         >
-          {(
-            [
-              { id: 'products', label: 'Productos' },
-              { id: 'free_amount', label: 'Monto libre' },
-            ] as const
-          ).map((option) => {
-            const selected = lastChargeMode === option.id;
-            return (
-              <Pressable
-                key={option.id}
-                accessibilityRole="button"
-                onPress={() => handleSelectMode(option.id)}
-                testID={`cobrar-mode-${option.id}`}
-                style={[
-                  styles.modeTab,
-                  selected ? tokens.shadows.card : undefined,
-                  {
-                    borderRadius: tokens.radius.radiusFull,
-                    backgroundColor: selected ? tokens.colors.primary : 'transparent',
-                    paddingVertical: tokens.spacing.space2 + 2,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.modeTabText,
-                    {
-                      fontFamily: tokens.typography.families.semiBold,
-                      color: selected ? tokens.colors.textOnPrimary : tokens.colors.textSecondary,
-                    },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
+          <AppIcon name="wallet" size={15} color={tokens.colors.primary} />
+          <Text
+            testID="cobrar-today-summary"
+            style={[
+              styles.summaryText,
+              tokens.typography.tabularNums,
+              {
+                fontFamily: tokens.typography.families.semiBold,
+                color: tokens.colors.textPrimary,
+              },
+            ]}
+          >
+            {`Hoy: ${formatCurrencyFromCents(totalCents, { omitZeroCents: true })} · ${countLabel}`}
+          </Text>
         </View>
 
         <View style={styles.body}>
-          {lastChargeMode === 'products' ? <PosScreen /> : <FreeAmountKeypad />}
+          <FreeAmountKeypad />
         </View>
       </View>
     </ScreenContainer>
@@ -190,37 +79,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topHeader: {
+  summaryPill: {
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
-  },
-  summaryPill: {
-    flex: 1,
+    borderWidth: 1,
   },
   summaryText: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  modeSwitch: {
-    flexDirection: 'row',
-  },
-  modeTab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modeTabText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
   body: {
     flex: 1,

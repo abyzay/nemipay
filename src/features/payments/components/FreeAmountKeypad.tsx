@@ -1,11 +1,11 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { AmountDisplay } from '@/components/financial';
 import { AppButton, AppIcon, AppInput } from '@/components/ui';
 import { env } from '@/config/env';
 import { useAppTheme } from '@/hooks';
 import { generateIdempotencyKey } from '@/services/security/crypto';
+import { formatCurrencyFromCents } from '@/utils/currency';
 import { useCreateCharge } from '../hooks/useCreateCharge';
 import { applyKeypadKey, parseAmountInputToCents } from '../utils/parseAmountCents';
 
@@ -83,7 +83,8 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
     }
   };
 
-  const canCharge = amountCents >= 100 && !createChargeMutation.isPending;
+  const isAmountValid = amountCents >= 100;
+  const canCharge = isAmountValid && !createChargeMutation.isPending;
 
   return (
     <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
@@ -91,10 +92,11 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
         style={[
           styles.amountStage,
           {
-            backgroundColor: tokens.colors.surface,
-            borderColor: tokens.colors.border,
-            borderRadius: tokens.radius.radiusCard,
-            padding: tokens.spacing.space4,
+            backgroundColor: '#F6F0FF',
+            borderColor: 'rgba(114, 0, 217, 0.1)',
+            borderRadius: tokens.radius.radiusBalanceCard,
+            paddingHorizontal: tokens.spacing.space5,
+            paddingVertical: tokens.spacing.space5,
           },
         ]}
       >
@@ -109,19 +111,51 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
         >
           Monto a cobrar
         </Text>
-        <AmountDisplay
-          amountCents={amountCents}
-          size="display"
-          tone={amountCents >= 100 ? 'primary' : 'default'}
-          testID="free-amount-display"
-        />
+
+        <View style={styles.amountRow}>
+          <Text
+            testID="free-amount-display"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={[
+              styles.amountValue,
+              tokens.typography.tabularNums,
+              {
+                fontFamily: tokens.typography.families.bold,
+                color: isAmountValid ? tokens.colors.primary : tokens.colors.textMuted,
+              },
+            ]}
+          >
+            {formatCurrencyFromCents(amountCents)}
+          </Text>
+          <Text
+            style={[
+              styles.currencyLabel,
+              {
+                fontFamily: tokens.typography.families.semiBold,
+                color: isAmountValid ? tokens.colors.primaryDark : tokens.colors.textSecondary,
+              },
+            ]}
+          >
+            MXN
+          </Text>
+        </View>
 
         {!conceptVisible ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => setConceptVisible(true)}
             testID="free-amount-add-concept-toggle"
-            style={styles.conceptToggle}
+            style={({ pressed }) => [
+              styles.conceptToggle,
+              {
+                backgroundColor: pressed ? tokens.colors.lavender : tokens.colors.background,
+                borderColor: tokens.colors.lavenderBorder,
+                borderRadius: tokens.radius.radiusFull,
+                paddingHorizontal: tokens.spacing.space3 + 2,
+                paddingVertical: tokens.spacing.space1 + 2,
+              },
+            ]}
           >
             <AppIcon name="plus" size={14} color={tokens.colors.primary} />
             <Text
@@ -139,11 +173,17 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
         ) : (
           <View style={styles.conceptInputWrap}>
             <AppInput
-              label="Concepto (opcional)"
+              variant="soft"
+              placeholder="Concepto (opcional): Ej. Café y pan"
               value={conceptInput}
               onChangeText={handleConceptChange}
               maxLength={60}
-              placeholder="Ej. Producto o servicio"
+              rightIcon="close"
+              onRightIconPress={() => {
+                setConceptInput('');
+                setConceptVisible(false);
+              }}
+              rightIconAccessibilityLabel="Quitar concepto"
               testID="free-amount-concept-input"
             />
           </View>
@@ -165,9 +205,9 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
         </Text>
       ) : null}
 
-      <View style={[styles.keypadGrid, { gap: tokens.spacing.space2 }]}>
+      <View style={[styles.keypadGrid, { gap: tokens.spacing.space2 + 2 }]}>
         {KEYPAD_ROWS.map((row, rowIndex) => (
-          <View key={rowIndex} style={[styles.keypadRow, { gap: tokens.spacing.space2 }]}>
+          <View key={rowIndex} style={[styles.keypadRow, { gap: tokens.spacing.space2 + 2 }]}>
             {row.map((key) => (
               <Pressable
                 key={key}
@@ -177,15 +217,16 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
                 testID={`keypad-key-${key}`}
                 style={({ pressed }) => [
                   styles.keypadButton,
+                  tokens.shadows.card,
                   {
-                    backgroundColor: pressed ? tokens.colors.lavenderSoft : tokens.colors.surface,
-                    borderColor: tokens.colors.border,
-                    borderRadius: tokens.radius.radiusMD,
+                    backgroundColor: pressed ? tokens.colors.lavender : tokens.colors.background,
+                    borderColor: pressed ? tokens.colors.lavenderBorder : tokens.colors.border,
+                    borderRadius: tokens.radius.radiusButton,
                   },
                 ]}
               >
                 {key === 'backspace' ? (
-                  <AppIcon name="chevron-left" size={22} color={tokens.colors.textPrimary} />
+                  <AppIcon name="chevron-left" size={22} color={tokens.colors.primary} />
                 ) : (
                   <Text
                     style={[
@@ -228,17 +269,35 @@ const styles = StyleSheet.create({
   amountStage: {
     borderWidth: 1,
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   amountLabel: {
     fontSize: 13,
     lineHeight: 18,
   },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 6,
+    maxWidth: '100%',
+  },
+  amountValue: {
+    fontSize: 40,
+    lineHeight: 48,
+    letterSpacing: -0.8,
+    flexShrink: 1,
+  },
+  currencyLabel: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
   conceptToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
+    gap: 5,
+    borderWidth: 1,
+    marginTop: 2,
   },
   conceptToggleText: {
     fontSize: 13,
@@ -261,7 +320,7 @@ const styles = StyleSheet.create({
   },
   keypadButton: {
     flex: 1,
-    minHeight: 54,
+    minHeight: 56,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

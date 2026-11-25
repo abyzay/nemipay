@@ -89,6 +89,21 @@ export function formatMovementDateLabel(isoDate: string, now: Date = new Date())
   return `${dayStr} ${monthStr}, ${timeLabel}`;
 }
 
+export function formatReceiptDateTime(isoDate: string | null | undefined): string {
+  if (!isoDate) {
+    return '';
+  }
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const parts = getMexicoCityDateParts(date);
+  const dayStr = String(parts.day).padStart(2, '0');
+  const monthStr = SHORT_MONTHS_ES[parts.month - 1] ?? '';
+  const timeLabel = formatMexicoCityTime(date);
+  return `${dayStr} ${monthStr} ${parts.year}, ${timeLabel}`;
+}
+
 const PENDING_STATUSES: MovementStatus[] = ['AWAITING_PAYMENT', 'CREATING'];
 const OTHER_STATUSES: MovementStatus[] = ['EXPIRED', 'CANCELLED', 'FAILED', 'UNDER_REVIEW'];
 

@@ -30,6 +30,8 @@ export interface Charge {
   concept: string;
   items: ChargeItemSnapshot[] | null;
   qrPayload: string | null;
+  peyReference?: string | null;
+  peyTransactionId?: string | null;
   expiresAt: string;
   paidAt: string | null;
   paidAfterExpiry: boolean;

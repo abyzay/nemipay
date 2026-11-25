@@ -1,15 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { router } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
 import { AmountDisplay } from '@/components/financial';
 import { ScreenContainer } from '@/components/layout';
 import { AppButton, AppCard, AppHeader, AppIcon } from '@/components/ui';
+import { fetchMerchantProfile } from '@/features/authentication/services';
+import { formatMovementDateLabel } from '@/features/movements/services';
 import { useAppTheme } from '@/hooks';
 import { generateIdempotencyKey } from '@/services/security/crypto';
 import { useUiStore } from '@/stores';
 import { useChargeLive } from '../hooks/useChargeLive';
 import { useCreateCharge } from '../hooks/useCreateCharge';
+import { paymentKeys } from '../queries/keys';
 import { announcePaymentReceived } from '../services/announce';
 import { cancelCharge } from '../services/chargesService';
 import { PaymentReceivedModal } from './PaymentReceivedModal';
@@ -17,15 +29,6 @@ import { PaymentReceivedModal } from './PaymentReceivedModal';
 export interface ChargeScreenProps {
   chargeId: string;
   onBackPress: () => void;
-}
-
-function formatTimeLabel(isoDate: string | null): string {
-  const date = isoDate ? new Date(isoDate) : new Date();
-  const hours24 = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const period = hours24 >= 12 ? 'p.m.' : 'a.m.';
-  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
-  return `${hours12}:${minutes} ${period}`;
 }
 
 function formatCountdown(expiresAtIso: string, nowMs: number): string {
@@ -45,8 +48,16 @@ function isImagePayload(qrPayload: string): boolean {
 
 export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
   const { tokens } = useAppTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const authenticatedUser = useUiStore((state) => state.authenticatedUser);
   const { data: charge, isLoading, error } = useChargeLive(chargeId);
   const createChargeMutation = useCreateCharge();
+
+  const merchantQuery = useQuery({
+    queryKey: paymentKeys.merchant(authenticatedUser?.id ?? ''),
+    queryFn: () => fetchMerchantProfile(authenticatedUser!.id),
+    enabled: Boolean(authenticatedUser?.id) && charge?.status === 'CONFIRMED',
+  });
 
   const hasAnnouncedCharge = useUiStore((state) => state.hasAnnouncedCharge);
   const markChargeAnnounced = useUiStore((state) => state.markChargeAnnounced);
@@ -55,6 +66,11 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
   const [confirmExitVisible, setConfirmExitVisible] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const qrSize = useMemo(() => {
+    const available = Math.max(220, Math.min(280, windowWidth - 116));
+    return available;
+  }, [windowWidth]);
 
   useEffect(() => {
     if (charge?.status !== 'AWAITING_PAYMENT') {
@@ -134,10 +150,20 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
 
   if (isLoading && !charge) {
     return (
-      <ScreenContainer edges={['top']}>
+      <ScreenContainer edges={['top', 'bottom']}>
         <AppHeader title="Cobro CoDi" onBackPress={onBackPress} backTestID="collect-back-button" />
         <View style={styles.centerState}>
-          <ActivityIndicator size="large" color={tokens.colors.primary} />
+          <View
+            style={[
+              styles.statusOrb,
+              {
+                backgroundColor: tokens.colors.lavender,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <ActivityIndicator size="large" color={tokens.colors.primary} />
+          </View>
           <Text
             style={[
               styles.stateTitle,
@@ -156,10 +182,20 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
 
   if (error || !charge) {
     return (
-      <ScreenContainer edges={['top']}>
+      <ScreenContainer edges={['top', 'bottom']}>
         <AppHeader title="Cobro CoDi" onBackPress={onBackPress} backTestID="collect-back-button" />
         <View style={styles.centerState}>
-          <AppIcon name="circle-alert" size={44} color={tokens.colors.error} />
+          <View
+            style={[
+              styles.statusOrb,
+              {
+                backgroundColor: tokens.colors.errorLight,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <AppIcon name="circle-alert" size={38} color={tokens.colors.error} />
+          </View>
           <Text
             style={[
               styles.stateTitle,
@@ -182,35 +218,81 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
           >
             {error?.message ?? 'Verifica tu conexión e intenta de nuevo.'}
           </Text>
-          <AppButton variant="primary" label="Volver" onPress={onBackPress} />
+          <View style={styles.actionStack}>
+            <AppButton variant="primary" label="Volver" onPress={onBackPress} />
+          </View>
         </View>
       </ScreenContainer>
     );
   }
 
   if (charge.status === 'CONFIRMED') {
+    const merchantName = merchantQuery.data?.name ?? authenticatedUser?.displayName;
     return (
       <PaymentReceivedModal
         visible
         amountCents={charge.amountCents}
-        timeLabel={formatTimeLabel(charge.paidAt)}
+        timeLabel={formatMovementDateLabel(charge.paidAt ?? charge.createdAt)}
         concept={charge.concept}
+        charge={charge}
+        merchantName={merchantName}
         onAccept={onBackPress}
       />
     );
   }
 
   return (
-    <ScreenContainer scrollable edges={['top']}>
+    <ScreenContainer scrollable edges={['top', 'bottom']}>
       <AppHeader
         title="Cobro CoDi"
         onBackPress={handleRequestBack}
         backTestID="collect-back-button"
+        rightSlot={
+          charge.status === 'AWAITING_PAYMENT' ? (
+            <View
+              style={[
+                styles.timerPill,
+                {
+                  backgroundColor: tokens.colors.lavender,
+                  borderRadius: tokens.radius.radiusFull,
+                  paddingHorizontal: tokens.spacing.space2 + 2,
+                  paddingVertical: tokens.spacing.space1 + 1,
+                  gap: tokens.spacing.space1,
+                },
+              ]}
+            >
+              <AppIcon name="clock" size={13} color={tokens.colors.primary} />
+              <Text
+                testID="charge-countdown"
+                style={[
+                  styles.timerText,
+                  tokens.typography.tabularNums,
+                  {
+                    fontFamily: tokens.typography.families.semiBold,
+                    color: tokens.colors.primary,
+                  },
+                ]}
+              >
+                {countdownLabel}
+              </Text>
+            </View>
+          ) : undefined
+        }
       />
 
       {charge.status === 'CREATING' ? (
         <View style={styles.centerState} testID="charge-creating-state">
-          <ActivityIndicator size="large" color={tokens.colors.primary} />
+          <View
+            style={[
+              styles.statusOrb,
+              {
+                backgroundColor: tokens.colors.lavender,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <ActivityIndicator size="large" color={tokens.colors.primary} />
+          </View>
           <Text
             style={[
               styles.stateTitle,
@@ -222,38 +304,89 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
           >
             Generando QR…
           </Text>
+          <Text
+            style={[
+              styles.stateSubtitle,
+              {
+                fontFamily: tokens.typography.families.regular,
+                color: tokens.colors.textSecondary,
+              },
+            ]}
+          >
+            Preparando tu código CoDi seguro…
+          </Text>
         </View>
       ) : null}
 
       {charge.status === 'AWAITING_PAYMENT' ? (
-        <View style={{ gap: tokens.spacing.space4, paddingTop: tokens.spacing.space3 }}>
-          <AppCard style={[styles.qrCard, { gap: tokens.spacing.space3 }]}>
-            <AmountDisplay
-              amountCents={charge.amountCents}
-              size="display"
-              tone="primary"
-              testID="charge-amount-display"
-            />
-            <Text
-              style={[
-                styles.conceptText,
-                {
-                  fontFamily: tokens.typography.families.medium,
-                  color: tokens.colors.textSecondary,
-                },
-              ]}
-            >
-              {charge.concept}
-            </Text>
+        <View
+          style={{
+            gap: tokens.spacing.space4,
+            paddingTop: tokens.spacing.space2,
+            paddingBottom: tokens.spacing.space6,
+          }}
+        >
+          <LinearGradient
+            colors={['#5B00C4', '#740BE2', '#9F3EFF']}
+            locations={[0, 0.45, 1]}
+            start={{ x: 0, y: 0.75 }}
+            end={{ x: 1, y: 0.15 }}
+            style={[
+              styles.heroQrCard,
+              tokens.shadows.floating,
+              {
+                borderRadius: tokens.radius.radiusLarge,
+                padding: tokens.spacing.space5,
+                gap: tokens.spacing.space4,
+              },
+            ]}
+          >
+            <View pointerEvents="none" style={styles.heroGlowOrb} />
+
+            <View style={styles.heroAmountBlock}>
+              <View style={styles.heroAmountRow}>
+                <AmountDisplay
+                  amountCents={charge.amountCents}
+                  size="display"
+                  tone="onPrimary"
+                  adjustsFontSizeToFit
+                  testID="charge-amount-display"
+                />
+                <Text
+                  style={[
+                    styles.heroCurrency,
+                    {
+                      fontFamily: tokens.typography.families.semiBold,
+                      color: 'rgba(255, 255, 255, 0.9)',
+                    },
+                  ]}
+                >
+                  MXN
+                </Text>
+              </View>
+
+              <Text
+                numberOfLines={2}
+                style={[
+                  styles.conceptText,
+                  {
+                    fontFamily: tokens.typography.families.medium,
+                    color: 'rgba(255, 255, 255, 0.88)',
+                  },
+                ]}
+              >
+                {charge.concept}
+              </Text>
+            </View>
 
             <View
+              testID="charge-qr-stage"
               style={[
-                styles.qrWrapper,
+                styles.qrStage,
                 {
                   backgroundColor: tokens.colors.background,
-                  borderColor: tokens.colors.border,
-                  borderRadius: tokens.radius.radiusCard,
-                  padding: tokens.spacing.space4,
+                  borderRadius: tokens.radius.radiusBalanceCard,
+                  padding: tokens.spacing.space4 + 2,
                 },
               ]}
             >
@@ -261,67 +394,97 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
                 isImagePayload(charge.qrPayload) ? (
                   <Image
                     source={{ uri: charge.qrPayload }}
-                    style={styles.qrImage}
+                    style={{ width: qrSize, height: qrSize }}
                     resizeMode="contain"
                     testID="charge-qr-image"
                   />
                 ) : (
                   <QRCode
                     value={charge.qrPayload}
-                    size={220}
+                    size={qrSize}
                     color={tokens.colors.textPrimary}
                     backgroundColor={tokens.colors.background}
                   />
                 )
               ) : (
-                <ActivityIndicator size="large" color={tokens.colors.primary} />
+                <View style={[styles.qrLoaderBox, { width: qrSize, height: qrSize }]}>
+                  <ActivityIndicator size="large" color={tokens.colors.primary} />
+                </View>
               )}
-            </View>
 
-            <Text
-              testID="charge-countdown"
-              style={[
-                styles.countdownText,
-                tokens.typography.tabularNums,
-                {
-                  fontFamily: tokens.typography.families.semiBold,
-                  color: tokens.colors.primary,
-                },
-              ]}
-            >
-              {`Vence en ${countdownLabel}`}
-            </Text>
+              <Text
+                style={[
+                  styles.qrScanHint,
+                  {
+                    fontFamily: tokens.typography.families.semiBold,
+                    color: tokens.colors.primary,
+                  },
+                ]}
+              >
+                Escanea con CoDi para pagar
+              </Text>
+            </View>
 
             <View
               style={[
                 styles.noticeBanner,
                 {
-                  backgroundColor: tokens.colors.lavenderSoft,
-                  borderColor: tokens.colors.lavenderBorder,
+                  backgroundColor: 'rgba(255, 255, 255, 0.16)',
                   borderRadius: tokens.radius.radiusMD,
-                  padding: tokens.spacing.space3,
+                  paddingHorizontal: tokens.spacing.space3,
+                  paddingVertical: tokens.spacing.space2 + 2,
                   gap: tokens.spacing.space2,
                 },
               ]}
             >
-              <AppIcon name="qr-code" size={18} color={tokens.colors.primary} />
+              <AppIcon name="qr-code" size={18} color={tokens.colors.textOnPrimary} />
               <Text
                 testID="charge-instruction-text"
                 style={[
                   styles.noticeText,
                   {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.textPrimary,
+                    fontFamily: tokens.typography.families.medium,
+                    color: tokens.colors.textOnPrimary,
                   },
                 ]}
               >
                 Abre la app de tu banco → CoDi → Escanear
               </Text>
             </View>
-          </AppCard>
+          </LinearGradient>
+
+          <View
+            style={[
+              styles.waitingRow,
+              {
+                backgroundColor: tokens.colors.lavenderSoft,
+                borderColor: tokens.colors.lavenderBorder,
+                borderRadius: tokens.radius.radiusMD,
+                paddingHorizontal: tokens.spacing.space3 + 2,
+                paddingVertical: tokens.spacing.space2 + 2,
+              },
+            ]}
+          >
+            <View style={[styles.waitingDot, { backgroundColor: tokens.colors.primary }]} />
+            <Text
+              style={[
+                styles.waitingText,
+                {
+                  fontFamily: tokens.typography.families.medium,
+                  color: tokens.colors.textSecondary,
+                },
+              ]}
+            >
+              {`Esperando confirmación automática · vence en ${countdownLabel}`}
+            </Text>
+          </View>
 
           {confirmExitVisible ? (
-            <AppCard style={{ gap: tokens.spacing.space3 }} testID="charge-cancel-prompt">
+            <AppCard
+              variant="selected"
+              style={{ gap: tokens.spacing.space3 }}
+              testID="charge-cancel-prompt"
+            >
               <Text
                 style={[
                   styles.promptTitle,
@@ -363,7 +526,17 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
 
       {charge.status === 'EXPIRED' ? (
         <View style={styles.centerState} testID="charge-expired-state">
-          <AppIcon name="clock" size={48} color={tokens.colors.warning} />
+          <View
+            style={[
+              styles.statusOrb,
+              {
+                backgroundColor: tokens.colors.warningLight,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <AppIcon name="clock" size={38} color={tokens.colors.warning} />
+          </View>
           <Text
             style={[
               styles.stateTitle,
@@ -395,7 +568,7 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
               onPress={() => void handleRegenerateCharge()}
               testID="charge-regenerate-button"
             />
-            <AppButton variant="outlined" label="Volver a Cobrar" onPress={onBackPress} />
+            <AppButton variant="outlined" label="Volver" onPress={onBackPress} />
           </View>
         </View>
       ) : null}
@@ -404,7 +577,26 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
       charge.status === 'CANCELLED' ||
       charge.status === 'UNDER_REVIEW' ? (
         <View style={styles.centerState} testID="charge-terminal-error-state">
-          <AppIcon name="circle-alert" size={48} color={tokens.colors.error} />
+          <View
+            style={[
+              styles.statusOrb,
+              {
+                backgroundColor:
+                  charge.status === 'UNDER_REVIEW'
+                    ? tokens.colors.warningLight
+                    : tokens.colors.errorLight,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <AppIcon
+              name={charge.status === 'UNDER_REVIEW' ? 'shield-alert' : 'circle-alert'}
+              size={38}
+              color={
+                charge.status === 'UNDER_REVIEW' ? tokens.colors.warningText : tokens.colors.error
+              }
+            />
+          </View>
           <Text
             style={[
               styles.stateTitle,
@@ -444,7 +636,7 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
               onPress={() => void handleRegenerateCharge()}
               testID="charge-retry-button"
             />
-            <AppButton variant="outlined" label="Volver a Cobrar" onPress={onBackPress} />
+            <AppButton variant="outlined" label="Volver" onPress={onBackPress} />
           </View>
         </View>
       ) : null}
@@ -470,11 +662,18 @@ export function ChargeScreen({ chargeId, onBackPress }: ChargeScreenProps) {
 const styles = StyleSheet.create({
   centerState: {
     flex: 1,
-    minHeight: 360,
+    minHeight: 380,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
     paddingHorizontal: 16,
+  },
+  statusOrb: {
+    width: 80,
+    height: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   stateTitle: {
     fontSize: 20,
@@ -491,37 +690,86 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 8,
   },
-  qrCard: {
+  timerPill: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  conceptText: {
+  timerText: {
+    fontSize: 13,
+    lineHeight: 17,
+  },
+  heroQrCard: {
+    alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heroGlowOrb: {
+    position: 'absolute',
+    right: -36,
+    top: -48,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(208, 140, 255, 0.2)',
+  },
+  heroAmountBlock: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  heroAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  heroCurrency: {
     fontSize: 15,
+    lineHeight: 20,
+  },
+  conceptText: {
+    fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
   },
-  qrWrapper: {
-    borderWidth: 1,
+  qrStage: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  qrLoaderBox: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qrImage: {
-    width: 220,
-    height: 220,
-  },
-  countdownText: {
-    fontSize: 14,
-    lineHeight: 20,
+  qrScanHint: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   noticeBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    borderWidth: 1,
   },
   noticeText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  waitingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+  },
+  waitingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  waitingText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
   },
   promptTitle: {
     fontSize: 15,
