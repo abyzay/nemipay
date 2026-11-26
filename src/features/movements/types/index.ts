@@ -13,6 +13,7 @@ export interface TodayMovement {
   timeLabel: string;
   status: MovementStatus;
   paidAfterExpiry: boolean;
+  billId?: string | null;
   createdAt: string;
 }
 

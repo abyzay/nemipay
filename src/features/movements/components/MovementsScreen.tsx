@@ -85,6 +85,10 @@ export function MovementsScreen() {
   };
 
   const handleOpenMovement = (movement: TodayMovement) => {
+    if (movement.billId) {
+      router.push({ pathname: '/bill/[billId]', params: { billId: movement.billId } });
+      return;
+    }
     router.push({ pathname: '/collect', params: { chargeId: movement.id } });
   };
 

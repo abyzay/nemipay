@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { AppButton, AppChip, AppEmptyState, AppHeader, AppIcon } from '@/components/ui';
+import { SplitSetupSheet } from '@/features/bills/components/SplitSetupSheet';
 import { useCreateCharge } from '@/features/payments/hooks/useCreateCharge';
 import { useAppTheme } from '@/hooks';
 import { generateIdempotencyKey } from '@/services/security/crypto';
@@ -88,6 +89,8 @@ export function PosScreen({ onBackPress, onChargeCreated }: PosScreenProps) {
   const [cartItems, setCartItems] = useState<PosCartItem[]>([]);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [summaryVisible, setSummaryVisible] = useState(false);
+  const [splitBillEnabled, setSplitBillEnabled] = useState(false);
+  const [splitSheetVisible, setSplitSheetVisible] = useState(false);
 
   const [productFormVisible, setProductFormVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<PosProduct | null>(null);
@@ -327,6 +330,17 @@ export function PosScreen({ onBackPress, onChargeCreated }: PosScreenProps) {
   };
 
   const handleGenerateQrCharge = async () => {
+    if (splitBillEnabled) {
+      if (totalCents < 200) {
+        setErrorMessage('El monto mínimo para dividir cuenta es de $2.00 MXN.');
+        return;
+      }
+      setErrorMessage(null);
+      setSummaryVisible(false);
+      setSplitSheetVisible(true);
+      return;
+    }
+
     if (totalCents < 100 || createChargeMutation.isPending) {
       return;
     }
@@ -781,11 +795,36 @@ export function PosScreen({ onBackPress, onChargeCreated }: PosScreenProps) {
           totalCents={totalCents}
           isGeneratingQr={createChargeMutation.isPending}
           errorMessage={errorMessage}
+          splitEnabled={splitBillEnabled}
+          onToggleSplit={(next) => {
+            setErrorMessage(null);
+            setSplitBillEnabled(next);
+          }}
           onIncrement={(product) => incrementProduct(product, false)}
           onDecrement={decrementProduct}
           onRemoveItem={removeProductFromCart}
           onModifyOrder={() => setSummaryVisible(false)}
           onConfirmGenerateQr={() => void handleGenerateQrCharge()}
+        />
+      ) : null}
+
+      {splitSheetVisible ? (
+        <SplitSetupSheet
+          visible
+          totalCents={totalCents}
+          items={cartItems.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          }))}
+          onClose={() => setSplitSheetVisible(false)}
+          onBillCreated={(billId) => {
+            setSplitSheetVisible(false);
+            setCartItems([]);
+            setActiveProductId(null);
+            setSplitBillEnabled(false);
+            resetIdempotencyIntent();
+            router.push({ pathname: '/bill/[billId]', params: { billId } });
+          }}
         />
       ) : null}
 

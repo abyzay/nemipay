@@ -167,6 +167,10 @@ export class RealPeyAdapter implements PeyAdapter {
 
     // En `POST /codi/qr`, `metadata` acepta pares clave-valor planos (sin objetos anidados);
     // Pey los devuelve anidados bajo `metadata.externalMetadata` en el webhook.
+    // VERIFY: Según docs.pey.mx, Pey aplica rate limiting por cuota (`429 CALL_LIMIT_REACHED`)
+    // y no documenta un tope de 1 solo QR activo simultáneo por cuenta, pero debe confirmarse en
+    // pruebas reales con Pey cuántos QR CoDi simultáneos permanecen activos (usamos MAX_LIVE_SHARES=2
+    // por defecto) y si CoDi Push requiere parámetros adicionales fuera del flujo QR.
     const body = {
       amount: centsToPesosNumber(input.amountCents),
       concept: input.concept,

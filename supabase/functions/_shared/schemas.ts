@@ -28,6 +28,52 @@ export const chargeIdBodySchema = z.object({
   chargeId: z.string().uuid(),
 });
 
+export const billIdBodySchema = z.object({
+  billId: z.string().uuid(),
+});
+
+export const splitCustomShareSchema = z.object({
+  label: z.string().trim().max(20).optional(),
+  amountCents: z.number().int().min(100),
+});
+
+export const splitConfigSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('EQUAL'),
+    people: z.number().int().min(2).max(4),
+  }),
+  z.object({
+    mode: z.literal('CUSTOM'),
+    shares: z.array(splitCustomShareSchema).min(2).max(4),
+  }),
+  z.object({
+    mode: z.literal('FREE'),
+  }),
+]);
+
+export const createBillBodySchema = z.union([
+  createChargeFreeAmountSchema
+    .extend({
+      amountCents: z.number().int().min(200),
+      split: splitConfigSchema,
+    })
+    .strict(),
+  createChargeItemsSchema
+    .extend({
+      split: splitConfigSchema,
+    })
+    .strict(),
+]);
+
+export const createShareChargeBodySchema = z
+  .object({
+    billId: z.string().uuid(),
+    participantId: z.string().uuid().optional(),
+    amountCents: z.number().int().min(100).optional(),
+    label: z.string().trim().max(20).optional(),
+  })
+  .strict();
+
 export const peyCreateQrResponseSchema = z
   .union([
     z.object({

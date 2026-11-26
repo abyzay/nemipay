@@ -1,5 +1,7 @@
 export { ChargeScreen } from './ChargeScreen';
 export type { ChargeScreenProps } from './ChargeScreen';
+export { CodiQrCard } from './CodiQrCard';
+export type { CodiQrCardProps } from './CodiQrCard';
 export { CobrarScreen } from './CobrarScreen';
 export type { CobrarScreenProps } from './CobrarScreen';
 export { FreeAmountKeypad } from './FreeAmountKeypad';

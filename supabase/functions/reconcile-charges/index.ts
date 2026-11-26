@@ -109,6 +109,7 @@ export function createReconcileChargesHandler(deps: ReconcileDeps) {
       scanned: candidates.length,
       processed,
       transitioned,
+      expiredBills: await deps.repo.expireStaleBills(),
     });
   };
 }

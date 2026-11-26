@@ -150,7 +150,7 @@ export function MovementRow({ movement, onPress, testID }: MovementRowProps) {
             },
           ]}
         >
-          {movement.timeLabel}
+          {movement.billId ? `${movement.timeLabel} · Cuenta compartida` : movement.timeLabel}
         </Text>
       </View>
 

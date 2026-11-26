@@ -16,6 +16,10 @@ export interface ChargeItemSnapshot {
   quantity: number;
 }
 
+export type SplitMode = 'EQUAL' | 'CUSTOM' | 'FREE';
+
+export type BillStatus = 'OPEN' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'EXPIRED';
+
 export interface ChargeRow {
   id: string;
   merchant_id: string;
@@ -34,8 +38,50 @@ export interface ChargeRow {
   paid_after_expiry: boolean;
   failure_reason: string | null;
   last_checked_at: string | null;
+  bill_id?: string | null;
+  participant_id?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface BillRow {
+  id: string;
+  merchant_id: string;
+  concept: string;
+  items: ChargeItemSnapshot[] | null;
+  total_cents: number;
+  split_mode: SplitMode;
+  status: BillStatus;
+  idempotency_key: string;
+  request_hash: string;
+  collected_cents: number;
+  overpaid_cents: number;
+  expires_at: string;
+  closed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillParticipantRow {
+  id: string;
+  bill_id: string;
+  position: number;
+  label: string;
+  share_cents: number | null;
+  created_at: string;
+}
+
+export interface BillParticipantDto {
+  id: string;
+  position: number;
+  label: string;
+  shareCents: number | null;
+}
+
+export interface CreateBillRpcResult {
+  isReplay: boolean;
+  bill: BillRow;
+  participants: BillParticipantRow[];
 }
 
 export interface ProductRow {
@@ -68,6 +114,8 @@ export interface ChargeDto {
   paidAt: string | null;
   paidAfterExpiry: boolean;
   failureReason: string | null;
+  billId: string | null;
+  participantId: string | null;
   createdAt: string;
 }
 
@@ -84,7 +132,18 @@ export function toChargeDto(row: ChargeRow): ChargeDto {
     paidAt: row.paid_at,
     paidAfterExpiry: row.paid_after_expiry,
     failureReason: row.failure_reason,
+    billId: row.bill_id ?? null,
+    participantId: row.participant_id ?? null,
     createdAt: row.created_at,
+  };
+}
+
+export function toBillParticipantDto(row: BillParticipantRow): BillParticipantDto {
+  return {
+    id: row.id,
+    position: row.position,
+    label: row.label,
+    shareCents: row.share_cents,
   };
 }
 
@@ -134,6 +193,31 @@ export interface EdgeRepository {
   }): Promise<{ inserted: boolean; eventId: string | null }>;
   markWebhookProcessed(webhookId: string, error?: string | null): Promise<void>;
   listChargesForReconciliation(limit: number): Promise<ChargeRow[]>;
+  createBill(input: {
+    merchantId: string;
+    concept: string;
+    items: ChargeItemSnapshot[] | null;
+    totalCents: number;
+    splitMode: SplitMode;
+    idempotencyKey: string;
+    requestHash: string;
+    ttlSeconds: number;
+    people?: number | null;
+    shares?: { label?: string; amountCents: number }[] | null;
+  }): Promise<CreateBillRpcResult>;
+  reserveShare(input: {
+    merchantId: string;
+    billId: string;
+    participantId?: string | null;
+    amountCents?: number | null;
+    label?: string | null;
+    idempotencyKey: string;
+    requestHash: string;
+    ttlSeconds: number;
+    maxLiveShares: number;
+  }): Promise<ChargeRow>;
+  cancelBill(merchantId: string, billId: string): Promise<BillRow>;
+  expireStaleBills(): Promise<number>;
 }
 
 export function createSupabaseEdgeRepository(client: SupabaseClient): EdgeRepository {
@@ -287,6 +371,63 @@ export function createSupabaseEdgeRepository(client: SupabaseClient): EdgeReposi
         .limit(limit);
       if (error) throw new Error(error.message);
       return (data as ChargeRow[]) ?? [];
+    },
+
+    async createBill(input) {
+      const { data, error } = await client.rpc('create_bill', {
+        p_merchant_id: input.merchantId,
+        p_concept: input.concept,
+        p_items: input.items,
+        p_total_cents: input.totalCents,
+        p_split_mode: input.splitMode,
+        p_idempotency_key: input.idempotencyKey,
+        p_request_hash: input.requestHash,
+        p_ttl_seconds: input.ttlSeconds,
+        p_people: input.people ?? null,
+        p_shares: input.shares ?? null,
+      });
+      if (error) throw new Error(error.message);
+      const result = data as {
+        is_replay: boolean;
+        bill: BillRow;
+        participants: BillParticipantRow[];
+      };
+      return {
+        isReplay: Boolean(result.is_replay),
+        bill: result.bill,
+        participants: result.participants ?? [],
+      };
+    },
+
+    async reserveShare(input) {
+      const { data, error } = await client.rpc('reserve_share', {
+        p_merchant_id: input.merchantId,
+        p_bill_id: input.billId,
+        p_participant_id: input.participantId ?? null,
+        p_amount_cents: input.amountCents ?? null,
+        p_label: input.label ?? null,
+        p_idempotency_key: input.idempotencyKey,
+        p_request_hash: input.requestHash,
+        p_ttl_seconds: input.ttlSeconds,
+        p_max_live_shares: input.maxLiveShares,
+      });
+      if (error) throw new Error(error.message);
+      return data as ChargeRow;
+    },
+
+    async cancelBill(merchantId, billId) {
+      const { data, error } = await client.rpc('cancel_bill', {
+        p_merchant_id: merchantId,
+        p_bill_id: billId,
+      });
+      if (error) throw new Error(error.message);
+      return data as BillRow;
+    },
+
+    async expireStaleBills() {
+      const { data, error } = await client.rpc('expire_stale_bills');
+      if (error) throw new Error(error.message);
+      return Number(data ?? 0);
     },
   };
 }

@@ -12,6 +12,14 @@ const mockCancelCharge = jest.fn();
 const mockFetchDailySummary = jest.fn();
 const mockFetchChargeById = jest.fn();
 
+jest.mock('@/features/bills/services/billsService', () => ({
+  fetchBillDetail: jest.fn(),
+  createShareCharge: jest.fn(),
+  cancelBill: jest.fn(),
+  createBill: jest.fn(),
+  fetchOpenBills: jest.fn(async () => []),
+}));
+
 jest.mock('@/features/payments/services/chargesService', () => {
   const actual = jest.requireActual('@/features/payments/services/chargesService');
   return {

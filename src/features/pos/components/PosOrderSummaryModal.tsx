@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AppBottomSheet, AppButton, AppDivider, AppIcon } from '@/components/ui';
+import { AppBottomSheet, AppButton, AppCheckbox, AppDivider, AppIcon } from '@/components/ui';
 import { useAppTheme } from '@/hooks';
 import { formatCurrencyFromCents } from '@/utils/currency';
 import type { PosCartItem, PosProduct } from '../types';
@@ -12,6 +12,8 @@ export interface PosOrderSummaryModalProps {
   totalCents: number;
   isGeneratingQr: boolean;
   errorMessage?: string | null;
+  splitEnabled?: boolean;
+  onToggleSplit?: (next: boolean) => void;
   onIncrement: (product: PosProduct) => void;
   onDecrement: (productId: string) => void;
   onRemoveItem: (productId: string) => void;
@@ -26,6 +28,8 @@ export function PosOrderSummaryModal({
   totalCents,
   isGeneratingQr,
   errorMessage,
+  splitEnabled = false,
+  onToggleSplit,
   onIncrement,
   onDecrement,
   onRemoveItem,
@@ -34,7 +38,8 @@ export function PosOrderSummaryModal({
 }: PosOrderSummaryModalProps) {
   const { tokens } = useAppTheme();
   const unitsLabel = unitsCount === 1 ? '1 artículo' : `${unitsCount} artículos`;
-  const canGenerate = totalCents >= 100 && cartItems.length > 0 && !isGeneratingQr;
+  const minTotal = splitEnabled ? 200 : 100;
+  const canGenerate = totalCents >= minTotal && cartItems.length > 0 && !isGeneratingQr;
 
   return (
     <AppBottomSheet
@@ -279,20 +284,50 @@ export function PosOrderSummaryModal({
           </Text>
         ) : null}
 
+        {onToggleSplit ? (
+          <View style={{ marginTop: tokens.spacing.space3 }}>
+            <AppCheckbox
+              checked={splitEnabled}
+              onToggle={onToggleSplit}
+              error={
+                splitEnabled && totalCents < 200
+                  ? 'El monto mínimo para dividir cuenta es de $2.00 MXN ($1.00 por persona).'
+                  : undefined
+              }
+              accessibilityLabel="Dividir cuenta entre varias personas"
+              testID="pos-summary-split-checkbox"
+            >
+              <Pressable onPress={() => onToggleSplit(!splitEnabled)}>
+                <Text
+                  style={{
+                    fontFamily: tokens.typography.families.semiBold,
+                    fontSize: 14,
+                    color: tokens.colors.textPrimary,
+                  }}
+                >
+                  Dividir cuenta
+                </Text>
+              </Pressable>
+            </AppCheckbox>
+          </View>
+        ) : null}
+
         <View
           style={[
             styles.actionsStack,
-            { gap: tokens.spacing.space2 + 2, marginTop: tokens.spacing.space4 },
+            { gap: tokens.spacing.space2 + 2, marginTop: tokens.spacing.space3 },
           ]}
         >
           <AppButton
             variant="primary"
             size="lg"
-            leftIcon="qr-code"
+            leftIcon={splitEnabled ? 'user-round' : 'qr-code'}
             label={
               isGeneratingQr
                 ? 'Generando QR…'
-                : `Generar QR · ${formatCurrencyFromCents(totalCents)}`
+                : splitEnabled
+                  ? `Dividir cuenta · ${formatCurrencyFromCents(totalCents)}`
+                  : `Generar QR · ${formatCurrencyFromCents(totalCents)}`
             }
             loading={isGeneratingQr}
             disabled={!canGenerate}

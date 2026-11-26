@@ -1,14 +1,14 @@
 import { createSupabaseAuthResolver, type AuthResolver } from '../_shared/auth.ts';
+import { requestPeyQrForCharge, resolveOrderTotalAndConcept } from '../_shared/chargeFlow.ts';
 import { handleCorsPreflight } from '../_shared/cors.ts';
-import { errorResponse, jsonResponse, logStructured } from '../_shared/errors.ts';
+import { errorResponse, jsonResponse } from '../_shared/errors.ts';
 import { sha256Hex } from '../_shared/money.ts';
-import { PeyHttpError, RealPeyAdapter, type PeyAdapter } from '../_shared/pey.ts';
+import { RealPeyAdapter, type PeyAdapter } from '../_shared/pey.ts';
 import { createChargeBodySchema, uuidSchema } from '../_shared/schemas.ts';
 import {
   createSupabaseAdminClient,
   createSupabaseEdgeRepository,
   toChargeDto,
-  type ChargeItemSnapshot,
   type EdgeRepository,
 } from '../_shared/supabaseAdmin.ts';
 
@@ -19,14 +19,6 @@ export interface CreateChargeDeps {
   getMaxChargeCents?: () => number;
   getChargeTtlSeconds?: () => number;
   getRateLimitPerMinute?: () => number;
-}
-
-function buildItemsConcept(items: ChargeItemSnapshot[]): string {
-  const joined = items.map((item) => `${item.quantity}× ${item.name}`).join(', ');
-  if (joined.length <= 60) {
-    return joined;
-  }
-  return `${joined.slice(0, 59)}…`;
 }
 
 export function createChargeHandler(deps: CreateChargeDeps) {
@@ -118,77 +110,19 @@ export function createChargeHandler(deps: CreateChargeDeps) {
       );
     }
 
-    let amountCents: number;
-    let concept: string;
-    let itemsSnapshot: ChargeItemSnapshot[] | null = null;
-
-    if ('items' in payload && payload.items) {
-      const aggregatedQuantities = new Map<string, number>();
-      for (const line of payload.items) {
-        aggregatedQuantities.set(
-          line.productId,
-          (aggregatedQuantities.get(line.productId) ?? 0) + line.quantity
-        );
-      }
-
-      const uniqueIds = Array.from(aggregatedQuantities.keys());
-      const activeProducts = await deps.repo.findActiveProductsByIds(user.userId, uniqueIds);
-      const productsMap = new Map(activeProducts.map((p) => [p.id, p]));
-
-      const snapshot: ChargeItemSnapshot[] = [];
-      let totalCents = 0;
-      for (const productId of uniqueIds) {
-        const product = productsMap.get(productId);
-        if (!product) {
-          return errorResponse(
-            req,
-            400,
-            'INVALID_PRODUCT',
-            'Uno o más productos no existen, no están activos o no pertenecen al comercio.'
-          );
-        }
-        const quantity = aggregatedQuantities.get(productId) ?? 0;
-        if (quantity < 1 || quantity > 99) {
-          return errorResponse(
-            req,
-            400,
-            'INVALID_QUANTITY',
-            'La cantidad por producto debe estar entre 1 y 99.'
-          );
-        }
-        totalCents += product.price_cents * quantity;
-        snapshot.push({
-          productId: product.id,
-          name: product.name,
-          priceCents: product.price_cents,
-          quantity,
-        });
-      }
-
-      if (totalCents < 100 || totalCents > maxChargeCents) {
-        return errorResponse(
-          req,
-          400,
-          'AMOUNT_OUT_OF_RANGE',
-          `El monto total debe estar entre $1.00 y $${(maxChargeCents / 100).toFixed(2)} MXN.`
-        );
-      }
-
-      amountCents = totalCents;
-      itemsSnapshot = snapshot;
-      concept = buildItemsConcept(snapshot);
-    } else {
-      const freeAmount = payload.amountCents!;
-      if (freeAmount < 100 || freeAmount > maxChargeCents) {
-        return errorResponse(
-          req,
-          400,
-          'AMOUNT_OUT_OF_RANGE',
-          `El monto debe estar entre $1.00 y $${(maxChargeCents / 100).toFixed(2)} MXN.`
-        );
-      }
-      amountCents = freeAmount;
-      concept = (payload.concept ?? 'Cobro NemiPay').trim();
+    const resolved = await resolveOrderTotalAndConcept({
+      req,
+      repo: deps.repo,
+      merchantId: user.userId,
+      payload:
+        'items' in payload && payload.items
+          ? { items: payload.items }
+          : { amountCents: payload.amountCents!, concept: payload.concept },
+      minAmountCents: 100,
+      maxChargeCents,
+    });
+    if (!resolved.ok) {
+      return resolved.response;
     }
 
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
@@ -197,9 +131,9 @@ export function createChargeHandler(deps: CreateChargeDeps) {
     try {
       createdCharge = await deps.repo.insertCreatingCharge({
         merchantId: user.userId,
-        amountCents,
-        concept,
-        items: itemsSnapshot,
+        amountCents: resolved.amountCents,
+        concept: resolved.concept,
+        items: resolved.itemsSnapshot,
         idempotencyKey,
         requestHash,
         expiresAt,
@@ -221,57 +155,18 @@ export function createChargeHandler(deps: CreateChargeDeps) {
       throw err;
     }
 
-    try {
-      const qrResult = await deps.pey.createQrCharge({
-        chargeId: createdCharge.id,
-        amountCents,
-        concept,
-        expiresAt,
-      });
-
-      const updated = await deps.repo.applyTransition({
-        chargeId: createdCharge.id,
-        to: 'AWAITING_PAYMENT',
-        peyReference: qrResult.peyReference,
-        qrPayload: qrResult.qrPayload,
-      });
-
-      logStructured('info', 'charge.created', {
-        chargeId: updated.id,
-        merchantId: user.userId,
-        amountCents,
-      });
-
-      return jsonResponse(req, 201, toChargeDto(updated));
-    } catch (error) {
-      if (error instanceof PeyHttpError && !error.isRetryable) {
-        await deps.repo.applyTransition({
-          chargeId: createdCharge.id,
-          to: 'FAILED',
-          failureReason: `PEY_HTTP_${error.status}`,
-        });
-        logStructured('warn', 'charge.pey_rejected', {
-          chargeId: createdCharge.id,
-          status: error.status,
-        });
-        return errorResponse(req, 502, 'PEY_REJECTED', 'No se pudo generar el QR CoDi en Pey.', {
-          chargeId: createdCharge.id,
-        });
-      }
-
-      // Error incierto (timeout / 5xx): dejamos en CREATING para que reconciliación decida
-      logStructured('warn', 'charge.pey_uncertain', {
-        chargeId: createdCharge.id,
-        reason: error instanceof Error ? error.message : 'unknown',
-      });
-      return errorResponse(
-        req,
-        502,
-        'PEY_UNCERTAIN',
-        'La creación del QR quedó pendiente de confirmación. Verifica en unos segundos.',
-        { chargeId: createdCharge.id }
-      );
+    const qrFlow = await requestPeyQrForCharge({
+      req,
+      repo: deps.repo,
+      pey: deps.pey,
+      charge: createdCharge,
+      merchantId: user.userId,
+    });
+    if (!qrFlow.ok) {
+      return qrFlow.response;
     }
+
+    return jsonResponse(req, 201, toChargeDto(qrFlow.charge));
   };
 }
 

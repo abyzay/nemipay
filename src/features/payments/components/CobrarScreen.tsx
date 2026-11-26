@@ -29,7 +29,7 @@ export function CobrarScreen({ onBackPress }: CobrarScreenProps = {}) {
   const countLabel = countConfirmed === 1 ? '1 cobro' : `${countConfirmed} cobros`;
 
   return (
-    <ScreenContainer edges={['top', 'bottom']}>
+    <ScreenContainer scrollable edges={['top', 'bottom']}>
       <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
         <AppHeader
           title="Cobrar con QR"

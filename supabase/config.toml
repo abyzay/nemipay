@@ -45,3 +45,12 @@ verify_jwt = false
 
 [functions.reconcile-charges]
 verify_jwt = false
+
+[functions.create-bill]
+verify_jwt = true
+
+[functions.create-share-charge]
+verify_jwt = true
+
+[functions.cancel-bill]
+verify_jwt = true

@@ -9,6 +9,10 @@ export type ChargeStatus =
   | 'CANCELLED'
   | 'UNDER_REVIEW';
 
+export type SplitMode = 'EQUAL' | 'CUSTOM' | 'FREE';
+
+export type BillStatus = 'OPEN' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'EXPIRED';
+
 export interface Database {
   public: {
     Tables: {
@@ -168,6 +172,8 @@ export interface Database {
           paid_after_expiry: boolean;
           failure_reason: string | null;
           last_checked_at: string | null;
+          bill_id: string | null;
+          participant_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -189,6 +195,8 @@ export interface Database {
           paid_after_expiry?: boolean;
           failure_reason?: string | null;
           last_checked_at?: string | null;
+          bill_id?: string | null;
+          participant_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -210,6 +218,8 @@ export interface Database {
           paid_after_expiry?: boolean;
           failure_reason?: string | null;
           last_checked_at?: string | null;
+          bill_id?: string | null;
+          participant_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -219,6 +229,117 @@ export interface Database {
             columns: ['merchant_id'];
             isOneToOne: false;
             referencedRelation: 'merchants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'charges_bill_id_fkey';
+            columns: ['bill_id'];
+            isOneToOne: false;
+            referencedRelation: 'bills';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'charges_participant_id_fkey';
+            columns: ['participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'bill_participants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      bills: {
+        Row: {
+          id: string;
+          merchant_id: string;
+          concept: string;
+          items: Json | null;
+          total_cents: number;
+          split_mode: SplitMode;
+          status: BillStatus;
+          idempotency_key: string;
+          request_hash: string;
+          collected_cents: number;
+          overpaid_cents: number;
+          expires_at: string;
+          closed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          merchant_id: string;
+          concept: string;
+          items?: Json | null;
+          total_cents: number;
+          split_mode: SplitMode;
+          status?: BillStatus;
+          idempotency_key: string;
+          request_hash: string;
+          collected_cents?: number;
+          overpaid_cents?: number;
+          expires_at: string;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          merchant_id?: string;
+          concept?: string;
+          items?: Json | null;
+          total_cents?: number;
+          split_mode?: SplitMode;
+          status?: BillStatus;
+          idempotency_key?: string;
+          request_hash?: string;
+          collected_cents?: number;
+          overpaid_cents?: number;
+          expires_at?: string;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bills_merchant_id_fkey';
+            columns: ['merchant_id'];
+            isOneToOne: false;
+            referencedRelation: 'merchants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      bill_participants: {
+        Row: {
+          id: string;
+          bill_id: string;
+          position: number;
+          label: string;
+          share_cents: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          bill_id: string;
+          position: number;
+          label?: string;
+          share_cents?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          bill_id?: string;
+          position?: number;
+          label?: string;
+          share_cents?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bill_participants_bill_id_fkey';
+            columns: ['bill_id'];
+            isOneToOne: false;
+            referencedRelation: 'bills';
             referencedColumns: ['id'];
           },
         ];
@@ -279,9 +400,17 @@ export interface Database {
           count_confirmed: number;
         }[];
       };
+      get_bill_detail: {
+        Args: {
+          p_bill_id: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       charge_status: ChargeStatus;
+      split_mode: SplitMode;
+      bill_status: BillStatus;
     };
     CompositeTypes: Record<string, never>;
   };

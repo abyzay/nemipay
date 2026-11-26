@@ -1,8 +1,9 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { AppButton, AppIcon, AppInput } from '@/components/ui';
+import { AppButton, AppCheckbox, AppIcon, AppInput } from '@/components/ui';
 import { env } from '@/config/env';
+import { SplitSetupSheet } from '@/features/bills/components/SplitSetupSheet';
 import { useAppTheme } from '@/hooks';
 import { generateIdempotencyKey } from '@/services/security/crypto';
 import { formatCurrencyFromCents } from '@/utils/currency';
@@ -27,6 +28,8 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
   const [amountInput, setAmountInput] = useState('');
   const [conceptVisible, setConceptVisible] = useState(false);
   const [conceptInput, setConceptInput] = useState('');
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splitSheetVisible, setSplitSheetVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
 
@@ -48,6 +51,16 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
   };
 
   const handleChargePress = async () => {
+    if (splitEnabled) {
+      if (amountCents < 200) {
+        setErrorMessage('El monto mínimo para dividir cuenta es de $2.00 MXN.');
+        return;
+      }
+      setErrorMessage(null);
+      setSplitSheetVisible(true);
+      return;
+    }
+
     if (amountCents < 100 || createChargeMutation.isPending) {
       return;
     }
@@ -83,7 +96,8 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
     }
   };
 
-  const isAmountValid = amountCents >= 100;
+  const minRequiredCents = splitEnabled ? 200 : 100;
+  const isAmountValid = amountCents >= minRequiredCents;
   const canCharge = isAmountValid && !createChargeMutation.isPending;
 
   return (
@@ -247,16 +261,84 @@ export function FreeAmountKeypad({ onChargeCreated }: FreeAmountKeypadProps) {
         ))}
       </View>
 
+      <AppCheckbox
+        checked={splitEnabled}
+        onToggle={(next) => {
+          setErrorMessage(null);
+          setSplitEnabled(next);
+        }}
+        error={
+          splitEnabled && amountCents > 0 && amountCents < 200
+            ? 'El monto mínimo para dividir cuenta es de $2.00 MXN ($1.00 por persona).'
+            : undefined
+        }
+        errorTestID="free-amount-split-min-error"
+        accessibilityLabel="Dividir cuenta entre varias personas"
+        testID="free-amount-split-checkbox"
+      >
+        <Pressable
+          onPress={() => {
+            setErrorMessage(null);
+            setSplitEnabled((prev) => !prev);
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: tokens.typography.families.semiBold,
+              fontSize: 14,
+              color: tokens.colors.textPrimary,
+            }}
+          >
+            Dividir cuenta
+          </Text>
+          {splitEnabled && amountCents === 0 ? (
+            <Text
+              style={{
+                fontFamily: tokens.typography.families.regular,
+                fontSize: 12,
+                color: tokens.colors.textSecondary,
+                marginTop: 2,
+              }}
+            >
+              Ingresa al menos $2.00 MXN para habilitar la división
+            </Text>
+          ) : null}
+        </Pressable>
+      </AppCheckbox>
+
       <AppButton
         variant="primary"
         size="lg"
-        leftIcon="qr-code"
-        label={createChargeMutation.isPending ? 'Generando QR…' : 'Cobrar con CoDi'}
+        leftIcon={splitEnabled ? 'user-round' : 'qr-code'}
+        label={
+          createChargeMutation.isPending
+            ? 'Generando QR…'
+            : splitEnabled
+              ? 'Dividir cuenta'
+              : 'Cobrar con CoDi'
+        }
         loading={createChargeMutation.isPending}
         disabled={!canCharge}
         onPress={() => void handleChargePress()}
         testID="free-amount-charge-button"
       />
+
+      {splitSheetVisible ? (
+        <SplitSetupSheet
+          visible
+          totalCents={amountCents}
+          concept={conceptInput.trim() || undefined}
+          onClose={() => setSplitSheetVisible(false)}
+          onBillCreated={(billId) => {
+            setSplitSheetVisible(false);
+            setAmountInput('');
+            setConceptInput('');
+            setConceptVisible(false);
+            setSplitEnabled(false);
+            router.push({ pathname: '/bill/[billId]', params: { billId } });
+          }}
+        />
+      ) : null}
     </View>
   );
 }

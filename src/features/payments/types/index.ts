@@ -36,6 +36,7 @@ export interface Charge {
   paidAt: string | null;
   paidAfterExpiry: boolean;
   failureReason: string | null;
+  billId?: string | null;
   createdAt: string;
 }
 

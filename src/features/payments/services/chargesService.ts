@@ -35,6 +35,7 @@ const chargeDtoSchema = z.object({
   paidAt: z.string().nullable(),
   paidAfterExpiry: z.boolean(),
   failureReason: z.string().nullable(),
+  billId: z.string().uuid().nullable().optional(),
   createdAt: z.string(),
 });
 
@@ -60,6 +61,7 @@ export function mapDbChargeRowToCharge(row: DbChargeRow): Charge {
     paidAt: row.paid_at,
     paidAfterExpiry: row.paid_after_expiry,
     failureReason: row.failure_reason,
+    billId: row.bill_id ?? null,
     createdAt: row.created_at,
   };
 }

@@ -125,9 +125,12 @@ export async function fetchMovementsPage({
 
   let query = supabase
     .from('charges')
-    .select('id, concept, amount_cents, currency, status, paid_after_expiry, paid_at, created_at', {
-      count: 'exact',
-    })
+    .select(
+      'id, concept, amount_cents, currency, status, paid_after_expiry, paid_at, bill_id, created_at',
+      {
+        count: 'exact',
+      }
+    )
     .order('created_at', { ascending: false })
     .range(from, to);
 
@@ -161,6 +164,7 @@ export async function fetchMovementsPage({
       timeLabel: formatMovementDateLabel(timestamp),
       status: row.status,
       paidAfterExpiry: row.paid_after_expiry,
+      billId: row.bill_id ?? null,
       createdAt: row.created_at,
     };
   });
@@ -189,6 +193,7 @@ export async function fetchChargesToday(): Promise<TodayMovement[]> {
     timeLabel: formatMovementDateLabel(row.paid_at ?? row.created_at),
     status: row.status,
     paidAfterExpiry: row.paid_after_expiry,
+    billId: row.bill_id ?? null,
     createdAt: row.created_at,
   }));
 }
