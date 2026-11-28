@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import Svg, { Path } from 'react-native-svg';
 import { ScreenContainer } from '@/components/layout';
 import { AppButton, AppChip, AppEmptyState, AppHeader, AppIcon } from '@/components/ui';
 import { paymentKeys } from '@/features/payments/queries/keys';
@@ -95,23 +94,7 @@ export function MovementsScreen() {
   const isRefreshing = movementsQuery.isRefetching && !movementsQuery.isFetchingNextPage;
 
   return (
-    <ScreenContainer edges={['top']} style={styles.screenRoot}>
-      <View pointerEvents="none" style={styles.backdropContainer}>
-        <Svg
-          width={220}
-          height={150}
-          viewBox="0 0 220 150"
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        >
-          <Path
-            d="M220 30C155 18 96 52 62 104C46 128 38 140 34 150H220V30Z"
-            fill={tokens.colors.lavender}
-            fillOpacity={0.55}
-          />
-        </Svg>
-      </View>
-
+    <ScreenContainer edges={['top']}>
       <AppHeader
         title="Movimientos"
         onBackPress={handleBack}
@@ -268,14 +251,6 @@ export function MovementsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screenRoot: {
-    position: 'relative',
-  },
-  backdropContainer: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-  },
   searchContainer: {
     height: 48,
     flexDirection: 'row',

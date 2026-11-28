@@ -7,8 +7,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import { PaymentReceipt, type PaymentReceiptDetail } from '@/components/financial';
+import { ScreenBackdrop } from '@/components/layout';
 import { AppBadge, AppButton, AppCard, AppHeader, AppIcon } from '@/components/ui';
 import { formatReceiptDateTime } from '@/features/movements/services';
 import { useAppTheme } from '@/hooks';
@@ -132,35 +132,7 @@ export function PaymentReceivedModal({
         testID="payment-received-modal"
         style={[styles.root, { backgroundColor: tokens.colors.background }]}
       >
-        <View pointerEvents="none" style={styles.topBlob}>
-          <Svg width={210} height={150} viewBox="0 0 210 150" accessibilityElementsHidden>
-            <Path
-              d="M36 0C52 54 102 96 172 108C190 111 202 118 210 128V0H36Z"
-              fill={tokens.colors.lavender}
-              fillOpacity={0.7}
-            />
-          </Svg>
-        </View>
-
-        <View pointerEvents="none" style={styles.bottomLeftBlob}>
-          <Svg width={170} height={120} viewBox="0 0 170 120" accessibilityElementsHidden>
-            <Path
-              d="M0 32C44 20 96 42 128 84C142 102 156 114 170 120H0V32Z"
-              fill={tokens.colors.lavender}
-              fillOpacity={0.55}
-            />
-          </Svg>
-        </View>
-
-        <View pointerEvents="none" style={styles.bottomRightBlob}>
-          <Svg width={180} height={130} viewBox="0 0 180 130" accessibilityElementsHidden>
-            <Path
-              d="M180 20C124 14 72 44 42 94C28 114 16 124 0 130H180V20Z"
-              fill={tokens.colors.lavender}
-              fillOpacity={0.65}
-            />
-          </Svg>
-        </View>
+        <ScreenBackdrop />
 
         <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
           {isReceiptVisible ? (
@@ -426,21 +398,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-  },
-  topBlob: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-  },
-  bottomLeftBlob: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-  },
-  bottomRightBlob: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
   },
   celebrationLayout: {
     flex: 1,

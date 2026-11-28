@@ -16,7 +16,6 @@ import {
   NemiPayLogo,
   type AppIconName,
 } from '@/components/ui';
-import { AuthBackdrop } from '@/features/authentication/components/AuthBackdrop';
 import { fetchMerchantProfile, updateMerchantProfile } from '@/features/authentication/services';
 import type { MerchantProfilePatch } from '@/features/authentication/types';
 import { paymentKeys } from '@/features/payments/queries/keys';
@@ -296,524 +295,245 @@ export function ProfileScreen({ onBackPress, onLogoutPress }: ProfileScreenProps
   };
 
   return (
-    <View style={[styles.screenWrapper, { backgroundColor: tokens.colors.background }]}>
-      <AuthBackdrop testID="profile-backdrop" />
-      <ScreenContainer edges={['top']} scrollable style={styles.transparent}>
-        <View style={styles.root}>
-          <AppHeader
-            title="Mi perfil"
-            onBackPress={onBackPress}
-            backTestID="profile-back-button"
-            testID="profile-header"
-            rightSlot={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Configuración y notificaciones"
-                onPress={openNotificationsSheet}
-                testID="profile-settings-button"
-                style={({ pressed }) => [
-                  styles.settingsBtn,
-                  {
-                    borderRadius: tokens.radius.radiusFull,
-                    backgroundColor: pressed ? tokens.colors.lavenderSoft : 'transparent',
-                  },
-                ]}
-              >
-                <AppIcon name="settings" size={22} color={tokens.colors.primary} />
-              </Pressable>
-            }
-          />
-
-          <View style={[styles.heroSection, { marginTop: tokens.spacing.space4 }]}>
-            <View
-              style={[
-                styles.avatarRing,
-                {
-                  borderColor: tokens.colors.lavenderBorder,
-                  borderRadius: tokens.radius.radiusFull,
-                },
-              ]}
-            >
-              <AppAvatar initials={getInitials(displayTitle)} size={84} testID="profile-avatar" />
-            </View>
-
-            <Text
-              testID="profile-merchant-name"
-              style={[
-                styles.displayTitle,
-                {
-                  fontFamily: tokens.typography.families.bold,
-                  color: tokens.colors.textPrimary,
-                  marginTop: tokens.spacing.space3,
-                },
-              ]}
-            >
-              {displayTitle}
-            </Text>
-
-            {ownerName && ownerName.toLowerCase() !== merchantName.toLowerCase() ? (
-              <Text
-                testID="profile-business-subtitle"
-                style={[
-                  styles.businessTag,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.primary,
-                  },
-                ]}
-              >
-                {merchantName}
-              </Text>
-            ) : null}
-
-            {displaySubtitle ? (
-              <Text
-                testID="profile-contact-subtitle"
-                style={[
-                  styles.subtitleText,
-                  {
-                    fontFamily: tokens.typography.families.medium,
-                    color: tokens.colors.textSecondary,
-                  },
-                ]}
-              >
-                {displaySubtitle}
-              </Text>
-            ) : null}
-
-            {shiftActive ? (
-              <View style={{ marginTop: tokens.spacing.space2 }}>
-                <AppBadge
-                  label="Turno activo (pantalla y voz)"
-                  variant="success"
-                  icon="volume-2"
-                  testID="profile-shift-badge"
-                />
-              </View>
-            ) : null}
-          </View>
-
-          <View style={[styles.menuList, { marginTop: tokens.spacing.space6 }]}>
-            <ProfileMenuRow
-              icon="user-round"
-              label="Mis datos"
-              valueHint={ownerName || phone ? undefined : 'Completar'}
-              testID="profile-menu-data"
-              onPress={openDataSheet}
-            />
-            <AppDivider />
-
-            <ProfileMenuRow
-              icon="credit-card"
-              label="Métodos de pago"
-              valueHint={clabe ? `CLABE ${maskClabe(clabe)}` : 'Agregar CLABE'}
-              testID="profile-menu-payment"
-              onPress={openPaymentSheet}
-            />
-            <AppDivider />
-
-            <ProfileMenuRow
-              icon="bell"
-              label="Notificaciones"
-              valueHint={
-                shiftActive ? 'Turno activo' : notificationsEnabled ? 'Activas' : 'Pausadas'
-              }
-              testID="profile-menu-notifications"
+    <ScreenContainer edges={['top']} scrollable backdropTestID="profile-backdrop">
+      <View style={styles.root}>
+        <AppHeader
+          title="Mi perfil"
+          onBackPress={onBackPress}
+          backTestID="profile-back-button"
+          testID="profile-header"
+          rightSlot={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Configuración y notificaciones"
               onPress={openNotificationsSheet}
-            />
-            <AppDivider />
+              testID="profile-settings-button"
+              style={({ pressed }) => [
+                styles.settingsBtn,
+                {
+                  borderRadius: tokens.radius.radiusFull,
+                  backgroundColor: pressed ? tokens.colors.lavenderSoft : 'transparent',
+                },
+              ]}
+            >
+              <AppIcon name="settings" size={22} color={tokens.colors.primary} />
+            </Pressable>
+          }
+        />
 
-            <ProfileMenuRow
-              icon="circle-help"
-              label="Ayuda"
-              testID="profile-menu-help"
-              onPress={() => {
-                setSheetError(null);
-                setActiveSheet('help');
-              }}
-            />
-            <AppDivider />
-
-            <ProfileMenuRow
-              icon="trash-2"
-              label="Cerrar sesión"
-              danger
-              testID="profile-logout-button"
-              onPress={() => {
-                setSheetError(null);
-                setActiveSheet('logout');
-              }}
-            />
+        <View style={[styles.heroSection, { marginTop: tokens.spacing.space4 }]}>
+          <View
+            style={[
+              styles.avatarRing,
+              {
+                borderColor: tokens.colors.lavenderBorder,
+                borderRadius: tokens.radius.radiusFull,
+              },
+            ]}
+          >
+            <AppAvatar initials={getInitials(displayTitle)} size={84} testID="profile-avatar" />
           </View>
 
-          <View style={[styles.footerBrand, { paddingVertical: tokens.spacing.space6 }]}>
-            <NemiPayLogo size="sm" testID="profile-footer-logo" />
-          </View>
+          <Text
+            testID="profile-merchant-name"
+            style={[
+              styles.displayTitle,
+              {
+                fontFamily: tokens.typography.families.bold,
+                color: tokens.colors.textPrimary,
+                marginTop: tokens.spacing.space3,
+              },
+            ]}
+          >
+            {displayTitle}
+          </Text>
+
+          {ownerName && ownerName.toLowerCase() !== merchantName.toLowerCase() ? (
+            <Text
+              testID="profile-business-subtitle"
+              style={[
+                styles.businessTag,
+                {
+                  fontFamily: tokens.typography.families.semiBold,
+                  color: tokens.colors.primary,
+                },
+              ]}
+            >
+              {merchantName}
+            </Text>
+          ) : null}
+
+          {displaySubtitle ? (
+            <Text
+              testID="profile-contact-subtitle"
+              style={[
+                styles.subtitleText,
+                {
+                  fontFamily: tokens.typography.families.medium,
+                  color: tokens.colors.textSecondary,
+                },
+              ]}
+            >
+              {displaySubtitle}
+            </Text>
+          ) : null}
+
+          {shiftActive ? (
+            <View style={{ marginTop: tokens.spacing.space2 }}>
+              <AppBadge
+                label="Turno activo (pantalla y voz)"
+                variant="success"
+                icon="volume-2"
+                testID="profile-shift-badge"
+              />
+            </View>
+          ) : null}
         </View>
 
-        {/* Hoja: Mis datos */}
-        <AppBottomSheet
-          visible={activeSheet === 'data'}
-          onClose={() => setActiveSheet(null)}
-          title="Mis datos"
-          closeButtonTestID="profile-data-close-button"
-          testID="profile-data-modal"
-        >
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <View style={{ gap: tokens.spacing.space4 }}>
-              <AppInput
-                label="Nombre del negocio"
-                leftIcon="store"
-                value={businessNameInput}
-                onChangeText={setBusinessNameInput}
-                maxLength={60}
-                placeholder="Ej. Tacos Nemi"
-                testID="profile-data-business-input"
-              />
+        <View style={[styles.menuList, { marginTop: tokens.spacing.space6 }]}>
+          <ProfileMenuRow
+            icon="user-round"
+            label="Mis datos"
+            valueHint={ownerName || phone ? undefined : 'Completar'}
+            testID="profile-menu-data"
+            onPress={openDataSheet}
+          />
+          <AppDivider />
 
-              <AppInput
-                label="Nombre del titular"
-                leftIcon="user-round"
-                value={ownerNameInput}
-                onChangeText={setOwnerNameInput}
-                maxLength={60}
-                placeholder="Ej. María López"
-                testID="profile-data-owner-input"
-              />
+          <ProfileMenuRow
+            icon="credit-card"
+            label="Métodos de pago"
+            valueHint={clabe ? `CLABE ${maskClabe(clabe)}` : 'Agregar CLABE'}
+            testID="profile-menu-payment"
+            onPress={openPaymentSheet}
+          />
+          <AppDivider />
 
-              <AppInput
-                label="Teléfono / Celular"
-                leftIcon="call-outline"
-                value={phoneInput}
-                onChangeText={setPhoneInput}
-                keyboardType="phone-pad"
-                maxLength={20}
-                placeholder="Ej. +52 55 1234 5678"
-                testID="profile-data-phone-input"
-              />
+          <ProfileMenuRow
+            icon="bell"
+            label="Notificaciones"
+            valueHint={shiftActive ? 'Turno activo' : notificationsEnabled ? 'Activas' : 'Pausadas'}
+            testID="profile-menu-notifications"
+            onPress={openNotificationsSheet}
+          />
+          <AppDivider />
 
-              <AppInput
-                label="Correo electrónico"
-                leftIcon="mail-outline"
-                value={email}
-                disabled
-                helperText="Correo verificado de tu cuenta NemiPay"
-                testID="profile-data-email-input"
-              />
-            </View>
+          <ProfileMenuRow
+            icon="circle-help"
+            label="Ayuda"
+            testID="profile-menu-help"
+            onPress={() => {
+              setSheetError(null);
+              setActiveSheet('help');
+            }}
+          />
+          <AppDivider />
 
-            {sheetError ? (
-              <Text
-                testID="profile-sheet-error"
-                style={[
-                  styles.sheetError,
-                  {
-                    fontFamily: tokens.typography.families.medium,
-                    color: tokens.colors.error,
-                  },
-                ]}
-              >
-                {sheetError}
-              </Text>
-            ) : null}
+          <ProfileMenuRow
+            icon="trash-2"
+            label="Cerrar sesión"
+            danger
+            testID="profile-logout-button"
+            onPress={() => {
+              setSheetError(null);
+              setActiveSheet('logout');
+            }}
+          />
+        </View>
 
-            <View
-              style={{ marginTop: tokens.spacing.space5, paddingBottom: tokens.spacing.space2 }}
-            >
-              <AppButton
-                variant="primary"
-                label={updateProfileMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
-                loading={updateProfileMutation.isPending}
-                disabled={updateProfileMutation.isPending}
-                onPress={() => void handleSaveData()}
-                testID="profile-data-save-button"
-              />
-            </View>
-          </ScrollView>
-        </AppBottomSheet>
+        <View style={[styles.footerBrand, { paddingVertical: tokens.spacing.space6 }]}>
+          <NemiPayLogo size="sm" testID="profile-footer-logo" />
+        </View>
+      </View>
 
-        {/* Hoja: Métodos de pago (Cuenta CLABE) */}
-        <AppBottomSheet
-          visible={activeSheet === 'payment'}
-          onClose={() => setActiveSheet(null)}
-          title="Cuenta CLABE"
-          closeButtonTestID="profile-payment-close-button"
-          testID="profile-payment-method-modal"
-        >
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <View style={{ gap: tokens.spacing.space4 }}>
-              <Text
-                style={[
-                  styles.sheetHint,
-                  {
-                    fontFamily: tokens.typography.families.regular,
-                    color: tokens.colors.textSecondary,
-                  },
-                ]}
-              >
-                Registra la cuenta CLABE interbancaria de 18 dígitos donde deseas recibir tus
-                depósitos.
-              </Text>
-
-              <AppInput
-                label="Cuenta CLABE (18 dígitos)"
-                leftIcon="banknote"
-                value={clabeInput}
-                onChangeText={handleClabeChange}
-                keyboardType="number-pad"
-                maxLength={18}
-                placeholder="000000000000000000"
-                helperText={`${clabeInput.length}/18 dígitos`}
-                testID="profile-clabe-input"
-              />
-
-              <View style={{ gap: tokens.spacing.space2 }}>
-                <AppInput
-                  label="Banco o institución (opcional)"
-                  leftIcon="business-outline"
-                  value={bankNameInput}
-                  onChangeText={setBankNameInput}
-                  maxLength={40}
-                  placeholder="Ej. BBVA, Nu, Santander"
-                  testID="profile-bank-input"
-                />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: tokens.spacing.space2 }}
-                >
-                  {BANK_PRESETS.map((bank) => (
-                    <AppChip
-                      key={bank}
-                      label={bank}
-                      selected={bankNameInput.trim().toLowerCase() === bank.toLowerCase()}
-                      onPress={() => setBankNameInput(bank)}
-                      testID={`profile-bank-chip-${bank}`}
-                    />
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-
-            {sheetError ? (
-              <Text
-                testID="profile-sheet-error"
-                style={[
-                  styles.sheetError,
-                  {
-                    fontFamily: tokens.typography.families.medium,
-                    color: tokens.colors.error,
-                  },
-                ]}
-              >
-                {sheetError}
-              </Text>
-            ) : null}
-
-            <View
-              style={{ marginTop: tokens.spacing.space5, paddingBottom: tokens.spacing.space2 }}
-            >
-              <AppButton
-                variant="primary"
-                label={updateProfileMutation.isPending ? 'Guardando…' : 'Guardar cuenta CLABE'}
-                loading={updateProfileMutation.isPending}
-                disabled={updateProfileMutation.isPending}
-                onPress={() => void handleSaveClabe()}
-                testID="profile-clabe-save-button"
-              />
-            </View>
-          </ScrollView>
-        </AppBottomSheet>
-
-        {/* Hoja: Notificaciones y turno */}
-        <AppBottomSheet
-          visible={activeSheet === 'notifications'}
-          onClose={() => setActiveSheet(null)}
-          title="Notificaciones"
-          closeButtonTestID="profile-notifications-close-button"
-          testID="profile-notifications-modal"
-        >
+      {/* Hoja: Mis datos */}
+      <AppBottomSheet
+        visible={activeSheet === 'data'}
+        onClose={() => setActiveSheet(null)}
+        title="Mis datos"
+        closeButtonTestID="profile-data-close-button"
+        testID="profile-data-modal"
+      >
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={{ gap: tokens.spacing.space4 }}>
-            <AppCard variant="secondary" padding="md" style={{ gap: tokens.spacing.space3 }}>
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <Text
-                    style={[
-                      styles.switchTitle,
-                      {
-                        fontFamily: tokens.typography.families.semiBold,
-                        color: tokens.colors.textPrimary,
-                      },
-                    ]}
-                  >
-                    Alertas de cobros recibidos
-                  </Text>
-                  <Text
-                    style={[
-                      styles.switchSub,
-                      {
-                        fontFamily: tokens.typography.families.regular,
-                        color: tokens.colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    Aviso inmediato al confirmarse un pago CoDi
-                  </Text>
-                </View>
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={(next) =>
-                    void handleToggleNotificationPref('notificationsEnabled', next)
-                  }
-                  trackColor={{ false: tokens.colors.gray[300], true: tokens.colors.primary }}
-                  thumbColor={tokens.colors.background}
-                  testID="profile-notifications-switch"
-                />
-              </View>
-
-              <AppDivider />
-
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <Text
-                    style={[
-                      styles.switchTitle,
-                      {
-                        fontFamily: tokens.typography.families.semiBold,
-                        color: tokens.colors.textPrimary,
-                      },
-                    ]}
-                  >
-                    Anuncio por voz del monto
-                  </Text>
-                  <Text
-                    style={[
-                      styles.switchSub,
-                      {
-                        fontFamily: tokens.typography.families.regular,
-                        color: tokens.colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    Lee en voz alta cada pago confirmado
-                  </Text>
-                </View>
-                <Switch
-                  value={voiceAnnouncementsEnabled}
-                  onValueChange={(next) =>
-                    void handleToggleNotificationPref('voiceAnnouncementsEnabled', next)
-                  }
-                  trackColor={{ false: tokens.colors.gray[300], true: tokens.colors.primary }}
-                  thumbColor={tokens.colors.background}
-                  testID="profile-voice-switch"
-                />
-              </View>
-            </AppCard>
-
-            <AppButton
-              variant={shiftActive ? 'outlined' : 'primary'}
-              leftIcon="volume-2"
-              label={
-                shiftActive ? 'Terminar turno (voz y pantalla)' : 'Iniciar turno (voz y pantalla)'
-              }
-              onPress={() => void handleToggleShift()}
-              testID="profile-shift-toggle-button"
+            <AppInput
+              label="Nombre del negocio"
+              leftIcon="store"
+              value={businessNameInput}
+              onChangeText={setBusinessNameInput}
+              maxLength={60}
+              placeholder="Ej. Tacos Nemi"
+              testID="profile-data-business-input"
             />
 
-            {sheetError ? (
-              <Text
-                testID="profile-sheet-error"
-                style={[
-                  styles.sheetError,
-                  {
-                    fontFamily: tokens.typography.families.medium,
-                    color: tokens.colors.error,
-                  },
-                ]}
-              >
-                {sheetError}
-              </Text>
-            ) : null}
+            <AppInput
+              label="Nombre del titular"
+              leftIcon="user-round"
+              value={ownerNameInput}
+              onChangeText={setOwnerNameInput}
+              maxLength={60}
+              placeholder="Ej. María López"
+              testID="profile-data-owner-input"
+            />
+
+            <AppInput
+              label="Teléfono / Celular"
+              leftIcon="call-outline"
+              value={phoneInput}
+              onChangeText={setPhoneInput}
+              keyboardType="phone-pad"
+              maxLength={20}
+              placeholder="Ej. +52 55 1234 5678"
+              testID="profile-data-phone-input"
+            />
+
+            <AppInput
+              label="Correo electrónico"
+              leftIcon="mail-outline"
+              value={email}
+              disabled
+              helperText="Correo verificado de tu cuenta NemiPay"
+              testID="profile-data-email-input"
+            />
           </View>
-        </AppBottomSheet>
 
-        {/* Hoja: Ayuda */}
-        <AppBottomSheet
-          visible={activeSheet === 'help'}
-          onClose={() => setActiveSheet(null)}
-          title="Ayuda"
-          closeButtonTestID="profile-help-close-button"
-          testID="profile-help-modal"
-        >
-          <View style={{ gap: tokens.spacing.space3 }}>
-            <AppCard variant="secondary" padding="md" style={{ gap: tokens.spacing.space2 }}>
-              <Text
-                style={[
-                  styles.helpItemTitle,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.textPrimary,
-                  },
-                ]}
-              >
-                Cobros con CoDi (QR y POS)
-              </Text>
-              <Text
-                style={[
-                  styles.helpItemText,
-                  {
-                    fontFamily: tokens.typography.families.regular,
-                    color: tokens.colors.textSecondary,
-                  },
-                ]}
-              >
-                Tu cliente escanea el QR desde la app de su banco y el pago se confirma al instante
-                en Movimientos.
-              </Text>
-            </AppCard>
+          {sheetError ? (
+            <Text
+              testID="profile-sheet-error"
+              style={[
+                styles.sheetError,
+                {
+                  fontFamily: tokens.typography.families.medium,
+                  color: tokens.colors.error,
+                },
+              ]}
+            >
+              {sheetError}
+            </Text>
+          ) : null}
 
-            <AppCard variant="secondary" padding="md" style={{ gap: tokens.spacing.space2 }}>
-              <Text
-                style={[
-                  styles.helpItemTitle,
-                  {
-                    fontFamily: tokens.typography.families.semiBold,
-                    color: tokens.colors.textPrimary,
-                  },
-                ]}
-              >
-                Cuenta CLABE de liquidación
-              </Text>
-              <Text
-                style={[
-                  styles.helpItemText,
-                  {
-                    fontFamily: tokens.typography.families.regular,
-                    color: tokens.colors.textSecondary,
-                  },
-                ]}
-              >
-                Asegúrate de ingresar los 18 dígitos de tu cuenta CLABE en Métodos de pago.
-              </Text>
-            </AppCard>
-
+          <View style={{ marginTop: tokens.spacing.space5, paddingBottom: tokens.spacing.space2 }}>
             <AppButton
               variant="primary"
-              label="Entendido"
-              onPress={() => setActiveSheet(null)}
-              testID="profile-help-ok-button"
+              label={updateProfileMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
+              loading={updateProfileMutation.isPending}
+              disabled={updateProfileMutation.isPending}
+              onPress={() => void handleSaveData()}
+              testID="profile-data-save-button"
             />
           </View>
-        </AppBottomSheet>
+        </ScrollView>
+      </AppBottomSheet>
 
-        {/* Hoja: Confirmar cerrar sesión */}
-        <AppBottomSheet
-          visible={activeSheet === 'logout'}
-          onClose={() => setActiveSheet(null)}
-          title="Cerrar sesión"
-          closeButtonTestID="profile-logout-close-button"
-          testID="profile-logout-modal"
-        >
+      {/* Hoja: Métodos de pago (Cuenta CLABE) */}
+      <AppBottomSheet
+        visible={activeSheet === 'payment'}
+        onClose={() => setActiveSheet(null)}
+        title="Cuenta CLABE"
+        closeButtonTestID="profile-payment-close-button"
+        testID="profile-payment-method-modal"
+      >
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={{ gap: tokens.spacing.space4 }}>
             <Text
               style={[
@@ -824,40 +544,304 @@ export function ProfileScreen({ onBackPress, onLogoutPress }: ProfileScreenProps
                 },
               ]}
             >
-              ¿Deseas cerrar tu sesión en este dispositivo? Podrás volver a entrar cuando quieras.
+              Registra la cuenta CLABE interbancaria de 18 dígitos donde deseas recibir tus
+              depósitos.
             </Text>
 
-            <View style={{ gap: tokens.spacing.space2 + 2 }}>
-              <AppButton
-                variant="destructive"
-                label="Sí, cerrar sesión"
-                onPress={() => {
-                  setActiveSheet(null);
-                  void onLogoutPress();
-                }}
-                testID="profile-logout-confirm-button"
+            <AppInput
+              label="Cuenta CLABE (18 dígitos)"
+              leftIcon="banknote"
+              value={clabeInput}
+              onChangeText={handleClabeChange}
+              keyboardType="number-pad"
+              maxLength={18}
+              placeholder="000000000000000000"
+              helperText={`${clabeInput.length}/18 dígitos`}
+              testID="profile-clabe-input"
+            />
+
+            <View style={{ gap: tokens.spacing.space2 }}>
+              <AppInput
+                label="Banco o institución (opcional)"
+                leftIcon="business-outline"
+                value={bankNameInput}
+                onChangeText={setBankNameInput}
+                maxLength={40}
+                placeholder="Ej. BBVA, Nu, Santander"
+                testID="profile-bank-input"
               />
-              <AppButton
-                variant="outlined"
-                label="Cancelar"
-                onPress={() => setActiveSheet(null)}
-                testID="profile-logout-cancel-button"
-              />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: tokens.spacing.space2 }}
+              >
+                {BANK_PRESETS.map((bank) => (
+                  <AppChip
+                    key={bank}
+                    label={bank}
+                    selected={bankNameInput.trim().toLowerCase() === bank.toLowerCase()}
+                    onPress={() => setBankNameInput(bank)}
+                    testID={`profile-bank-chip-${bank}`}
+                  />
+                ))}
+              </ScrollView>
             </View>
           </View>
-        </AppBottomSheet>
-      </ScreenContainer>
-    </View>
+
+          {sheetError ? (
+            <Text
+              testID="profile-sheet-error"
+              style={[
+                styles.sheetError,
+                {
+                  fontFamily: tokens.typography.families.medium,
+                  color: tokens.colors.error,
+                },
+              ]}
+            >
+              {sheetError}
+            </Text>
+          ) : null}
+
+          <View style={{ marginTop: tokens.spacing.space5, paddingBottom: tokens.spacing.space2 }}>
+            <AppButton
+              variant="primary"
+              label={updateProfileMutation.isPending ? 'Guardando…' : 'Guardar cuenta CLABE'}
+              loading={updateProfileMutation.isPending}
+              disabled={updateProfileMutation.isPending}
+              onPress={() => void handleSaveClabe()}
+              testID="profile-clabe-save-button"
+            />
+          </View>
+        </ScrollView>
+      </AppBottomSheet>
+
+      {/* Hoja: Notificaciones y turno */}
+      <AppBottomSheet
+        visible={activeSheet === 'notifications'}
+        onClose={() => setActiveSheet(null)}
+        title="Notificaciones"
+        closeButtonTestID="profile-notifications-close-button"
+        testID="profile-notifications-modal"
+      >
+        <View style={{ gap: tokens.spacing.space4 }}>
+          <AppCard variant="secondary" padding="md" style={{ gap: tokens.spacing.space3 }}>
+            <View style={styles.switchRow}>
+              <View style={styles.switchTextCol}>
+                <Text
+                  style={[
+                    styles.switchTitle,
+                    {
+                      fontFamily: tokens.typography.families.semiBold,
+                      color: tokens.colors.textPrimary,
+                    },
+                  ]}
+                >
+                  Alertas de cobros recibidos
+                </Text>
+                <Text
+                  style={[
+                    styles.switchSub,
+                    {
+                      fontFamily: tokens.typography.families.regular,
+                      color: tokens.colors.textSecondary,
+                    },
+                  ]}
+                >
+                  Aviso inmediato al confirmarse un pago CoDi
+                </Text>
+              </View>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={(next) =>
+                  void handleToggleNotificationPref('notificationsEnabled', next)
+                }
+                trackColor={{ false: tokens.colors.gray[300], true: tokens.colors.primary }}
+                thumbColor={tokens.colors.background}
+                testID="profile-notifications-switch"
+              />
+            </View>
+
+            <AppDivider />
+
+            <View style={styles.switchRow}>
+              <View style={styles.switchTextCol}>
+                <Text
+                  style={[
+                    styles.switchTitle,
+                    {
+                      fontFamily: tokens.typography.families.semiBold,
+                      color: tokens.colors.textPrimary,
+                    },
+                  ]}
+                >
+                  Anuncio por voz del monto
+                </Text>
+                <Text
+                  style={[
+                    styles.switchSub,
+                    {
+                      fontFamily: tokens.typography.families.regular,
+                      color: tokens.colors.textSecondary,
+                    },
+                  ]}
+                >
+                  Lee en voz alta cada pago confirmado
+                </Text>
+              </View>
+              <Switch
+                value={voiceAnnouncementsEnabled}
+                onValueChange={(next) =>
+                  void handleToggleNotificationPref('voiceAnnouncementsEnabled', next)
+                }
+                trackColor={{ false: tokens.colors.gray[300], true: tokens.colors.primary }}
+                thumbColor={tokens.colors.background}
+                testID="profile-voice-switch"
+              />
+            </View>
+          </AppCard>
+
+          <AppButton
+            variant={shiftActive ? 'outlined' : 'primary'}
+            leftIcon="volume-2"
+            label={
+              shiftActive ? 'Terminar turno (voz y pantalla)' : 'Iniciar turno (voz y pantalla)'
+            }
+            onPress={() => void handleToggleShift()}
+            testID="profile-shift-toggle-button"
+          />
+
+          {sheetError ? (
+            <Text
+              testID="profile-sheet-error"
+              style={[
+                styles.sheetError,
+                {
+                  fontFamily: tokens.typography.families.medium,
+                  color: tokens.colors.error,
+                },
+              ]}
+            >
+              {sheetError}
+            </Text>
+          ) : null}
+        </View>
+      </AppBottomSheet>
+
+      {/* Hoja: Ayuda */}
+      <AppBottomSheet
+        visible={activeSheet === 'help'}
+        onClose={() => setActiveSheet(null)}
+        title="Ayuda"
+        closeButtonTestID="profile-help-close-button"
+        testID="profile-help-modal"
+      >
+        <View style={{ gap: tokens.spacing.space3 }}>
+          <AppCard variant="secondary" padding="md" style={{ gap: tokens.spacing.space2 }}>
+            <Text
+              style={[
+                styles.helpItemTitle,
+                {
+                  fontFamily: tokens.typography.families.semiBold,
+                  color: tokens.colors.textPrimary,
+                },
+              ]}
+            >
+              Cobros con CoDi (QR y POS)
+            </Text>
+            <Text
+              style={[
+                styles.helpItemText,
+                {
+                  fontFamily: tokens.typography.families.regular,
+                  color: tokens.colors.textSecondary,
+                },
+              ]}
+            >
+              Tu cliente escanea el QR desde la app de su banco y el pago se confirma al instante en
+              Movimientos.
+            </Text>
+          </AppCard>
+
+          <AppCard variant="secondary" padding="md" style={{ gap: tokens.spacing.space2 }}>
+            <Text
+              style={[
+                styles.helpItemTitle,
+                {
+                  fontFamily: tokens.typography.families.semiBold,
+                  color: tokens.colors.textPrimary,
+                },
+              ]}
+            >
+              Cuenta CLABE de liquidación
+            </Text>
+            <Text
+              style={[
+                styles.helpItemText,
+                {
+                  fontFamily: tokens.typography.families.regular,
+                  color: tokens.colors.textSecondary,
+                },
+              ]}
+            >
+              Asegúrate de ingresar los 18 dígitos de tu cuenta CLABE en Métodos de pago.
+            </Text>
+          </AppCard>
+
+          <AppButton
+            variant="primary"
+            label="Entendido"
+            onPress={() => setActiveSheet(null)}
+            testID="profile-help-ok-button"
+          />
+        </View>
+      </AppBottomSheet>
+
+      {/* Hoja: Confirmar cerrar sesión */}
+      <AppBottomSheet
+        visible={activeSheet === 'logout'}
+        onClose={() => setActiveSheet(null)}
+        title="Cerrar sesión"
+        closeButtonTestID="profile-logout-close-button"
+        testID="profile-logout-modal"
+      >
+        <View style={{ gap: tokens.spacing.space4 }}>
+          <Text
+            style={[
+              styles.sheetHint,
+              {
+                fontFamily: tokens.typography.families.regular,
+                color: tokens.colors.textSecondary,
+              },
+            ]}
+          >
+            ¿Deseas cerrar tu sesión en este dispositivo? Podrás volver a entrar cuando quieras.
+          </Text>
+
+          <View style={{ gap: tokens.spacing.space2 + 2 }}>
+            <AppButton
+              variant="destructive"
+              label="Sí, cerrar sesión"
+              onPress={() => {
+                setActiveSheet(null);
+                void onLogoutPress();
+              }}
+              testID="profile-logout-confirm-button"
+            />
+            <AppButton
+              variant="outlined"
+              label="Cancelar"
+              onPress={() => setActiveSheet(null)}
+              testID="profile-logout-cancel-button"
+            />
+          </View>
+        </View>
+      </AppBottomSheet>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  screenWrapper: {
-    flex: 1,
-  },
-  transparent: {
-    backgroundColor: 'transparent',
-  },
   root: {
     flex: 1,
     justifyContent: 'space-between',

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import { ScreenContainer } from '@/components/layout';
 import { AppButton, AppCard, AppHeader, AppIcon, NemiPayLogo } from '@/components/ui';
 import {
@@ -294,17 +293,7 @@ export function BillScreen({ billId, onBackPress }: BillScreenProps) {
   }
 
   return (
-    <ScreenContainer scrollable edges={['top', 'bottom']} style={styles.screenRoot}>
-      <View pointerEvents="none" style={styles.bottomRightBlob}>
-        <Svg width={180} height={130} viewBox="0 0 180 130" accessibilityElementsHidden>
-          <Path
-            d="M180 20C124 14 72 44 42 94C28 114 16 124 0 130H180V20Z"
-            fill={tokens.colors.lavender}
-            fillOpacity={0.75}
-          />
-        </Svg>
-      </View>
-
+    <ScreenContainer scrollable edges={['top', 'bottom']}>
       <View style={[styles.container, { gap: tokens.spacing.space3 }]}>
         <AppHeader
           centerSlot={<NemiPayLogo size="sm" />}
@@ -460,14 +449,6 @@ export function BillScreen({ billId, onBackPress }: BillScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  screenRoot: {
-    position: 'relative',
-  },
-  bottomRightBlob: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-  },
   container: {
     paddingBottom: 24,
   },

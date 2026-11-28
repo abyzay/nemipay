@@ -1,5 +1,46 @@
 import { z } from 'npm:zod@3.24.2';
 
+export interface CreateChargeItemInput {
+  productId: string;
+  quantity: number;
+}
+
+export interface SplitCustomShareInput {
+  label?: string;
+  amountCents: number;
+}
+
+export type SplitConfigInput =
+  | { mode: 'EQUAL'; people: number }
+  | { mode: 'CUSTOM'; shares: SplitCustomShareInput[] }
+  | { mode: 'FREE' };
+
+export type CreateChargeBodyInput =
+  | {
+      amountCents: number;
+      concept?: string;
+      items?: undefined;
+    }
+  | {
+      items: CreateChargeItemInput[];
+      amountCents?: undefined;
+      concept?: undefined;
+    };
+
+export type CreateBillBodyInput =
+  | {
+      amountCents: number;
+      concept?: string;
+      items?: undefined;
+      split: SplitConfigInput;
+    }
+  | {
+      items: CreateChargeItemInput[];
+      amountCents?: undefined;
+      concept?: undefined;
+      split: SplitConfigInput;
+    };
+
 export const uuidSchema = z.string().uuid();
 
 export const createChargeItemSchema = z.object({
@@ -85,7 +126,7 @@ export const peyCreateQrResponseSchema = z
       qr: z.string().min(1),
     }),
   ])
-  .transform((data) =>
+  .transform((data: { id: string; qrString: string } | { codiQrId: string; qr: string }) =>
     'id' in data
       ? { codiQrId: data.id, qr: data.qrString }
       : { codiQrId: data.codiQrId, qr: data.qr }

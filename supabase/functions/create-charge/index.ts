@@ -4,7 +4,12 @@ import { handleCorsPreflight } from '../_shared/cors.ts';
 import { errorResponse, jsonResponse } from '../_shared/errors.ts';
 import { sha256Hex } from '../_shared/money.ts';
 import { RealPeyAdapter, type PeyAdapter } from '../_shared/pey.ts';
-import { createChargeBodySchema, uuidSchema } from '../_shared/schemas.ts';
+import {
+  createChargeBodySchema,
+  uuidSchema,
+  type CreateChargeBodyInput,
+  type CreateChargeItemInput,
+} from '../_shared/schemas.ts';
 import {
   createSupabaseAdminClient,
   createSupabaseEdgeRepository,
@@ -45,7 +50,7 @@ export function createChargeHandler(deps: CreateChargeDeps) {
         'El header Idempotency-Key debe ser un UUID válido.'
       );
     }
-    const idempotencyKey = keyParsed.data;
+    const idempotencyKey: string = keyParsed.data;
 
     let rawJson: unknown;
     try {
@@ -69,12 +74,12 @@ export function createChargeHandler(deps: CreateChargeDeps) {
       (Number.parseInt(Deno.env.get('CHARGE_TTL_SECONDS') ?? '600', 10) || 600);
     const rateLimitPerMinute = deps.getRateLimitPerMinute?.() ?? 30;
 
-    const payload = bodyParsed.data;
+    const payload: CreateChargeBodyInput = bodyParsed.data;
     const canonicalBody =
       'items' in payload && payload.items
         ? {
             mode: 'items',
-            items: payload.items.map((item) => ({
+            items: payload.items.map((item: CreateChargeItemInput) => ({
               productId: item.productId,
               quantity: item.quantity,
             })),

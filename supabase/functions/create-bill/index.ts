@@ -3,7 +3,13 @@ import { resolveOrderTotalAndConcept } from '../_shared/chargeFlow.ts';
 import { handleCorsPreflight } from '../_shared/cors.ts';
 import { errorResponse, jsonResponse, logStructured } from '../_shared/errors.ts';
 import { sha256Hex } from '../_shared/money.ts';
-import { createBillBodySchema, uuidSchema } from '../_shared/schemas.ts';
+import {
+  createBillBodySchema,
+  uuidSchema,
+  type CreateBillBodyInput,
+  type CreateChargeItemInput,
+  type SplitCustomShareInput,
+} from '../_shared/schemas.ts';
 import {
   createSupabaseAdminClient,
   createSupabaseEdgeRepository,
@@ -42,7 +48,7 @@ export function createBillHandler(deps: CreateBillDeps) {
         'El header Idempotency-Key debe ser un UUID válido.'
       );
     }
-    const idempotencyKey = keyParsed.data;
+    const idempotencyKey: string = keyParsed.data;
 
     let rawJson: unknown;
     try {
@@ -65,7 +71,7 @@ export function createBillHandler(deps: CreateBillDeps) {
       deps.getBillTtlSeconds?.() ??
       (Number.parseInt(Deno.env.get('BILL_TTL_SECONDS') ?? '600', 10) || 600);
 
-    const payload = bodyParsed.data;
+    const payload: CreateBillBodyInput = bodyParsed.data;
 
     const resolved = await resolveOrderTotalAndConcept({
       req,
@@ -96,7 +102,10 @@ export function createBillHandler(deps: CreateBillDeps) {
         );
       }
     } else if (split.mode === 'CUSTOM') {
-      const sum = split.shares.reduce((acc, s) => acc + s.amountCents, 0);
+      const sum = split.shares.reduce(
+        (acc: number, s: SplitCustomShareInput) => acc + s.amountCents,
+        0
+      );
       if (sum !== resolved.amountCents) {
         return errorResponse(
           req,
@@ -112,7 +121,7 @@ export function createBillHandler(deps: CreateBillDeps) {
         'items' in payload && payload.items
           ? {
               mode: 'items',
-              items: payload.items.map((item) => ({
+              items: payload.items.map((item: CreateChargeItemInput) => ({
                 productId: item.productId,
                 quantity: item.quantity,
               })),
@@ -128,7 +137,7 @@ export function createBillHandler(deps: CreateBillDeps) {
           : split.mode === 'CUSTOM'
             ? {
                 mode: 'CUSTOM',
-                shares: split.shares.map((s) => ({
+                shares: split.shares.map((s: SplitCustomShareInput) => ({
                   label: (s.label ?? '').trim(),
                   amountCents: s.amountCents,
                 })),
