@@ -137,7 +137,7 @@ describe('DashboardScreen (Inicio)', () => {
 
     expect(screen.getByTestId('dashboard-action-qr')).toBeOnTheScreen();
     expect(screen.getByTestId('dashboard-action-pos')).toBeOnTheScreen();
-    expect(screen.getByTestId('dashboard-action-movements')).toBeOnTheScreen();
+    expect(screen.getByTestId('dashboard-action-reports')).toBeOnTheScreen();
     expect(screen.getByTestId('dashboard-action-profile')).toBeOnTheScreen();
 
     expect(screen.getByText('Actividad reciente')).toBeOnTheScreen();
@@ -182,9 +182,9 @@ describe('DashboardScreen (Inicio)', () => {
     await fireEvent.press(screen.getByTestId('dashboard-today-card'));
     expect(router.push).toHaveBeenCalledWith('/activity');
 
-    // Movimientos lleva a /activity
-    await fireEvent.press(screen.getByTestId('dashboard-action-movements'));
-    expect(router.push).toHaveBeenCalledWith('/activity');
+    // Reportes lleva a /reports
+    await fireEvent.press(screen.getByTestId('dashboard-action-reports'));
+    expect(router.push).toHaveBeenCalledWith('/reports');
 
     // Perfil lleva a /profile
     await fireEvent.press(screen.getByTestId('dashboard-action-profile'));

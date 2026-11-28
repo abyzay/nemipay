@@ -117,6 +117,10 @@ export function DashboardScreen() {
     router.push('/activity');
   };
 
+  const handleOpenReports = () => {
+    router.push('/reports');
+  };
+
   const handleOpenProfile = () => {
     router.push('/profile');
   };
@@ -145,11 +149,11 @@ export function DashboardScreen() {
       testID: 'dashboard-action-pos',
     },
     {
-      id: 'movements',
-      label: 'Movimientos',
-      icon: 'sliders-horizontal',
-      onPress: handleOpenActivity,
-      testID: 'dashboard-action-movements',
+      id: 'reports',
+      label: 'Reportes',
+      icon: 'bar-chart',
+      onPress: handleOpenReports,
+      testID: 'dashboard-action-reports',
     },
     {
       id: 'profile',
